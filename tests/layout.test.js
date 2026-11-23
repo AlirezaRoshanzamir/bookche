@@ -216,3 +216,113 @@ test("cover overhang and spine width affect physical cut dimensions independentl
   assert.equal(cover.width, (25 + 3) * 2 + 4.2);
   assert.equal(cover.height, 35 + 3);
 });
+
+test("covers and pages can share a row without changing reading order", () => {
+  const b = book(8);
+  b.pagesStartOnNewRow = false;
+  const pieces = computeLayout([b], defaultSettings()).sheets[0].front;
+  assert.equal(pieces[0].kind, "cover");
+  assert.equal(pieces[1].x, pieces[0].x + pieces[0].width + 3);
+  assert.equal(pieces[1].y, pieces[0].y);
+  assert.equal(pieces[6].x, 10);
+  assert.equal(pieces[6].y, 10 + pieces[0].height + b.rowGap);
+  assert.deepEqual(pieces.slice(1).map(p => p.page), [1, 2, 3, 4, 5, 6, 7, 8]);
+});
+
+test("books share rows of mixed heights and wrap below the tallest item", () => {
+  const a = book(1), b = makeBook("second", "Second", "asset", 7);
+  a.cover.enabled = b.cover.enabled = false;
+  a.height = 60;
+  b.startOnNewRow = b.pagesStartOnNewRow = false;
+  b.rowGap = 7;
+  const pieces = computeLayout([a, b], defaultSettings()).sheets[0].front;
+  assert.equal(pieces[1].x, 35);
+  assert.equal(pieces[1].y, 10);
+  assert.equal(pieces[7].x, 10);
+  assert.equal(pieces[7].y, 77);
+});
+
+test("book, cover and page row starts each force a fresh row", () => {
+  for (const boundary of ["book", "cover", "pages"]) {
+    const a = book(1), b = makeBook("second", "Second", "asset", 1);
+    a.cover.enabled = false;
+    b.startOnNewRow = b.pagesStartOnNewRow = b.cover.startOnNewRow = false;
+    b.cover.enabled = boundary === "cover";
+    if (boundary === "book") b.startOnNewRow = true;
+    if (boundary === "cover") b.cover.startOnNewRow = true;
+    if (boundary === "pages") b.pagesStartOnNewRow = true;
+    const pieces = computeLayout([a, b], defaultSettings()).sheets[0].front;
+    assert.equal(pieces[1].x, 10, boundary);
+    assert.equal(pieces[1].y, 48, boundary);
+  }
+});
+
+test("shared rows preserve duplex pairing and blank cover backs", () => {
+  const a = book(3), b = makeBook("second", "Second", "asset", 2);
+  a.pagesStartOnNewRow = false;
+  b.startOnNewRow = b.pagesStartOnNewRow = false;
+  b.cover.enabled = false;
+  for (const orientation of ["portrait", "landscape"]) {
+    for (const flip of ["long", "short"]) {
+      const settings = duplex({ orientation, flip });
+      const layout = computeLayout([a, b], settings);
+      const [w, h] = paperSize(settings);
+      const mirrorX = flip === "long" ? h >= w : h < w;
+      const front = layout.sheets[0].front, back = layout.sheets[0].back;
+      assert.equal(front.length, 4);
+      assert.equal(back.length, 2);
+      for (const reverse of back) {
+        const face = front.find(p => p.bookId === reverse.bookId && p.page === reverse.page - 1);
+        assert.equal(reverse.x, mirrorX ? w - face.x - face.width : face.x);
+        assert.equal(reverse.y, mirrorX ? face.y : h - face.y - face.height);
+      }
+    }
+  }
+});
+
+test("shared rows move overflowing taller pieces to the next sheet", () => {
+  const a = book(1), b = makeBook("second", "Second", "asset", 1);
+  a.cover.enabled = b.cover.enabled = false;
+  a.height = 20;
+  b.height = 60;
+  b.startOnNewRow = b.pagesStartOnNewRow = false;
+  const settings = { ...defaultSettings(), paper: "Custom", customWidth: 100, customHeight: 70 };
+  // The taller item fits a new sheet, but not the remaining height on the current one.
+  b.height = 45;
+  a.pageCount = 4;
+  const layout = computeLayout([a, b], settings);
+  assert.equal(layout.sheets.length, 2);
+  assert.equal(layout.sheets[1].front[0].bookId, b.id);
+  assert.equal(layout.sheets[1].front[0].x, 10);
+  assert.equal(layout.sheets[1].front[0].y, 10);
+});
+
+test("shared rows can have zero spacing", () => {
+  const a = book(7), b = makeBook("second", "Second", "asset", 2);
+  a.cover.enabled = b.cover.enabled = false;
+  a.rowGap = b.rowGap = 0;
+  b.startOnNewRow = b.pagesStartOnNewRow = false;
+  const pieces = computeLayout([a, b], defaultSettings()).sheets[0].front;
+  assert.equal(pieces[7].y, 45);
+  assert.equal(pieces[8].x, 35);
+});
+
+test("row settings survive project loading and old projects keep separate rows", () => {
+  const b = book(12);
+  b.startOnNewRow = b.pagesStartOnNewRow = false;
+  b.cover.startOnNewRow = true;
+  const input = { version: 1, books: [b], assets: { asset: {
+    bytes: new Uint8Array([1]), mime: "application/pdf", pageCount: 12,
+  } } };
+  let loaded = normalizeProject(input).books[0];
+  assert.equal(loaded.startOnNewRow, false);
+  assert.equal(loaded.pagesStartOnNewRow, false);
+  assert.equal(loaded.cover.startOnNewRow, true);
+  delete b.startOnNewRow;
+  delete b.pagesStartOnNewRow;
+  delete b.cover.startOnNewRow;
+  loaded = normalizeProject(input).books[0];
+  assert.equal(loaded.startOnNewRow, true);
+  assert.equal(loaded.pagesStartOnNewRow, true);
+  assert.equal(loaded.cover.startOnNewRow, false);
+});

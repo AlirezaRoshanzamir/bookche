@@ -154,6 +154,8 @@ export function normalizeProject(data, encoded = false) {
     // Existing projects keep their exact dimensions until the link is enabled.
     b.lockAspectRatio = item.lockAspectRatio === true;
     b.includePages = item.includePages !== false;
+    b.startOnNewRow = item.startOnNewRow !== false;
+    b.pagesStartOnNewRow = item.pagesStartOnNewRow !== false;
     b.hidden = !!item.hidden;
     b.border = !!item.border;
     b.ranges = text(item.ranges, 3000);
@@ -171,6 +173,7 @@ export function normalizeProject(data, encoded = false) {
     b.markRanges = text(item.markRanges, 3000);
     Object.assign(b.cover, {
       enabled: c.enabled !== false,
+      startOnNewRow: c.startOnNewRow === true,
       mode: oneOf(c.mode, ["generated", "wrap", "separate"], "generated"),
       spine: finite(c.spine, 0, 30, 3),
       overhang: finite(c.overhang, 0, 10, 0.5),

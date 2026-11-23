@@ -162,6 +162,7 @@ function renderLibrary() {
       <div class="book-card-text"><input class="book-title-input" type="text" maxlength="160" data-book-title="${esc(b.id)}" aria-label="Book title" value="${esc(b.title)}"><small class="book-source" title="${esc(state.assets[b.assetId]?.name)}">${esc(state.assets[b.assetId]?.name)}</small><small>${b.pageCount} pages / ${displayNumber(b.width)} x ${displayNumber(b.height)} mm</small></div></div>
       <div class="book-card-actions"><label><input type="checkbox" data-include-book="${esc(b.id)}" ${!b.hidden ? "checked" : ""}> Include in print</label><span><button class="icon-btn" data-action="duplicate-book" data-id="${esc(b.id)}" aria-label="Duplicate ${esc(b.title)}" title="Duplicate book">${icon("copy")}</button><button class="icon-btn danger" data-action="delete-book" data-id="${esc(b.id)}" aria-label="Remove ${esc(b.title)}" title="Remove book">${icon("trash")}</button></span></div>
       <div class="book-card-bottom"><label><input type="checkbox" data-book-part="pages" data-book-id="${esc(b.id)}" aria-label="Pages for ${esc(b.title)}" ${b.includePages ? "checked" : ""} ${b.hidden ? "disabled" : ""}> Pages</label><label><input type="checkbox" data-book-part="cover" data-book-id="${esc(b.id)}" aria-label="Cover for ${esc(b.title)}" ${b.cover.enabled ? "checked" : ""} ${b.hidden ? "disabled" : ""}> Cover</label></div>
+      <div class="book-card-bottom book-row-setting"><label title="When off, this book can share the previous book's last row. Cover and page row settings still apply."><input type="checkbox" data-book-row="${esc(b.id)}" ${b.startOnNewRow !== false ? "checked" : ""} ${b.hidden ? "disabled" : ""}> Start on a new row</label></div>
     </article>`,
         )
         .join("")
@@ -368,7 +369,7 @@ function pagesPanel(b) {
     ) +
     section(
       "Spacing",
-      `${numberField("Space between rows", "rowGap", b.rowGap, 0, 50, 0.5)}${state.settings.mode === "duplex" ? numberField("Space between pages", "columnGap", b.columnGap, 0, 50, 0.5) : `<div class="tip-card">${icon("scissors")}<p>Single-sided pages touch side by side.</p></div>`}`,
+      `${toggle("Start on a new row", "When off, pages continue after the preceding content if there is room.", "pagesStartOnNewRow", b.pagesStartOnNewRow !== false)}${numberField("Space between rows", "rowGap", b.rowGap, 0, 50, 0.5)}${state.settings.mode === "duplex" ? numberField("Space between pages", "columnGap", b.columnGap, 0, 50, 0.5) : `<div class="tip-card">${icon("scissors")}<p>Single-sided pages touch side by side.</p></div>`}`,
     ) +
     section(
       "Reading order",
@@ -425,7 +426,7 @@ function coverPanel(b) {
       : "") +
     section(
       "Cover layout",
-      `<div class="cover-schematic"><div style="background:${esc(c.color)};color:${esc(c.ink)}"><span>BACK</span><i></i><span>FRONT</span></div><small>${(cw * 2 + c.spine).toFixed(1)} x ${(b.height + c.overhang * 2).toFixed(1)} mm unfolded</small></div>${selectField(
+      `${toggle("Start on a new row", "When off, the cover continues after the preceding content if there is room.", "cover.startOnNewRow", c.startOnNewRow === true)}<div class="cover-schematic"><div style="background:${esc(c.color)};color:${esc(c.ink)}"><span>BACK</span><i></i><span>FRONT</span></div><small>${(cw * 2 + c.spine).toFixed(1)} x ${(b.height + c.overhang * 2).toFixed(1)} mm unfolded</small></div>${selectField(
         "Cover artwork",
         "cover.mode",
         c.mode,
@@ -836,6 +837,10 @@ function handleField(field, isInput = false) {
     return;
   }
 
+  if (field.dataset.bookRow) {
+    editBook("startOnNewRow", field.checked, false, field.dataset.bookRow);
+    return;
+  }
   if (field.dataset.includeBook) {
     editBook("hidden", !field.checked, true, field.dataset.includeBook);
     return;

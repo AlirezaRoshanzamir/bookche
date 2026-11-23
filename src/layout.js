@@ -49,6 +49,8 @@ export function makeBook(id, title, assetId, pageCount) {
     lockAspectRatio: true,
     ranges: "",
     includePages: true,
+    startOnNewRow: true,
+    pagesStartOnNewRow: true,
     rowGap: 3,
     columnGap: 2,
     border: false,
@@ -58,6 +60,7 @@ export function makeBook(id, title, assetId, pageCount) {
     markRanges: "",
     cover: {
       enabled: true,
+      startOnNewRow: false,
       mode: "generated",
       spine: 3,
       overhang: 0.5,
@@ -196,8 +199,9 @@ export function computeLayout(books, settings) {
       );
       continue;
     }
-    nextRow();
+    if (book.startOnNewRow !== false) nextRow();
     if (book.cover.enabled) {
+      if (book.cover.startOnNewRow === true) nextRow();
       const cw = book.width + book.cover.overhang * 2,
         ch = book.height + book.cover.overhang * 2;
       place(
@@ -212,7 +216,6 @@ export function computeLayout(books, settings) {
         3,
         book.rowGap,
       );
-      nextRow();
     }
     if (book.marks !== "none" && book.markPages === "custom") {
       try {
@@ -236,6 +239,7 @@ export function computeLayout(books, settings) {
       width: book.width,
       height: book.height,
     };
+    if (pages.length && book.pagesStartOnNewRow !== false) nextRow();
     for (let i = 0; i < pages.length; i += duplex ? 2 : 1) {
       place(
         { ...base, page: pages[i] },
