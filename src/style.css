@@ -2889,11 +2889,11 @@ input.scale-slider {
   margin: 0 9px;
 }
 .sheet-value,
-.sheet-margin-value .field {
+.sheet-number-value .field {
   margin: 0;
 }
 .sheet-value > span,
-.sheet-margin-value .number-field > label {
+.sheet-number-value .number-field > label {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -2922,116 +2922,109 @@ input.scale-slider {
   background-position: right 4px center;
   background-repeat: no-repeat;
 }
-.sheet-margin-value {
+.sheet-number-value {
   width: 132px;
 }
-.sheet-margin-value .number-wrap {
+.sheet-number-value .number-wrap {
   min-height: 30px;
   border-color: transparent;
   background: transparent;
   border-radius: 5px;
 }
-.sheet-margin-value .number-wrap:hover,
-.sheet-margin-value .number-wrap:focus-within {
+.sheet-number-value .number-wrap:hover,
+.sheet-number-value .number-wrap:focus-within {
   border-color: #ded8eb;
   background: #ffffffb3;
 }
-.sheet-margin-value .number-step {
+.sheet-number-value .number-step {
   width: 18px;
   min-width: 18px;
   opacity: 0;
   border: 0;
   background: transparent;
 }
-.sheet-margin-value:hover .number-step,
-.sheet-margin-value:focus-within .number-step {
+.sheet-number-value:hover .number-step,
+.sheet-number-value:focus-within .number-step {
   opacity: 1;
 }
-.sheet-margin-value .number-value input {
+.sheet-number-value .number-value input {
   font-size: 13px;
   color: #7c738e;
   padding: 4px 0;
 }
-.sheet-margin-value .number-unit {
+.sheet-number-value .number-unit {
   font-size: 12px;
   color: #7c738e;
   white-space: nowrap;
 }
-.sheet-advanced {
-  margin-left: auto;
+/* Expanded values take part in the same wrapping toolbar. */
+.sheet-quick-controls,
+.sheet-advanced-content {
+  display: contents;
 }
-.sheet-advanced > summary {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px;
-  border-radius: 5px;
-  cursor: pointer;
-  list-style: none;
-  font-size: 12px;
-  color: #8a7e9b;
-}
-.sheet-advanced > summary::-webkit-details-marker {
+.sheet-advanced-content[hidden] {
   display: none;
 }
-.sheet-advanced > summary .icon {
+.sheet-more,
+.sheet-inline-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 5px 6px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  font-size: 12px;
+  color: #8a7e9b;
+  white-space: nowrap;
+}
+.sheet-more .icon,
+.sheet-inline-action .icon {
   width: 14px;
   height: 14px;
 }
-.sheet-advanced > summary:hover,
-.sheet-advanced[open] > summary {
+.sheet-more:hover,
+.sheet-more[aria-expanded="true"],
+.sheet-inline-action:hover {
   background: #eae6f3;
   color: var(--purple);
 }
-.sheet-advanced > summary:focus-visible {
+.sheet-more:focus-visible,
+.sheet-inline-action:focus-visible {
   outline: 2px solid var(--purple);
   outline-offset: 2px;
 }
-.sheet-advanced-content {
-  position: absolute;
-  z-index: 30;
-  top: calc(100% + 4px);
-  right: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
-  width: min(620px, 100%);
-  max-height: min(480px, 60dvh);
-  padding: 14px;
-  overflow-y: auto;
-  border: 1px solid #ded8eb;
-  border-radius: 9px;
-  background: #f8f7fb;
-  box-shadow: 0 12px 35px #33244e24;
-}
-.sheet-advanced-content .settings-section {
+.sheet-inline-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
   margin: 0;
-  padding: 12px;
-  min-width: 0;
-  border: 1px solid #e6e2ed;
-  border-radius: 7px;
-  background: white;
+  padding: 5px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: #7c738e;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
 }
-.sheet-advanced-content h3 {
-  font-size: 14px;
-  margin: 0 0 12px;
-  color: var(--text);
+.sheet-inline-toggle:hover,
+.sheet-inline-toggle:focus-within {
+  border-color: #ded8eb;
+  background: #ffffffb3;
 }
-.sheet-advanced-content .field-help {
-  margin-bottom: 0;
-}
-.sheet-advanced-content .toggle-row {
-  margin: 0 0 12px;
-  gap: 12px;
-}
-.sheet-advanced-content .number-field + .toggle-row {
-  margin-top: 14px;
+.sheet-inline-toggle input {
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  accent-color: var(--purple);
 }
 @media (max-width: 600px) {
+  .sheet-setup {
+    column-gap: 4px;
+  }
   .sheet-setup .summary-divider {
     margin: 0 3px;
-  }
-  .sheet-advanced-content {
-    grid-template-columns: minmax(0, 1fr);
   }
 }

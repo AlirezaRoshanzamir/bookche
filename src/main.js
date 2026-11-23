@@ -527,9 +527,21 @@ function syncSheetValueWidths() {
     select.style.width = `calc(${select.selectedOptions[0].textContent.length}ch + 28px)`;
   });
 }
+function sheetNumber(label, key, value, min, max, step, suffix) {
+  return `<div class="sheet-number-value" title="Change ${esc(label.toLowerCase())}">${numberField(label, key, value, min, max, step, "settings", suffix)}</div>`;
+}
+function sheetToggle(label, key, checked, description, rebuild = false) {
+  return `<label class="sheet-inline-toggle" title="${esc(description)}"><input type="checkbox" data-target="settings" data-key="${key}" ${checked ? "checked" : ""} ${rebuild ? "data-rebuild" : ""}><span>${label}</span></label>`;
+}
+function setSheetOptionsOpen(open) {
+  $("#sheet-advanced").hidden = !open;
+  const button = $('[data-action="toggle-sheet-options"]');
+  button.setAttribute("aria-expanded", String(open));
+  button.querySelector("span").textContent = open ? "Less" : "More";
+}
 function renderSheetControls() {
   const s = state.settings,
-    open = $("#sheet-advanced")?.open || false,
+    open = $("#sheet-advanced") ? !$("#sheet-advanced").hidden : false,
     focusedKey = document.activeElement?.closest("#sheet-setup")
       ? document.activeElement.dataset.key
       : null;
@@ -542,31 +554,25 @@ function renderSheetControls() {
   )}<span class="summary-divider" aria-hidden="true"></span>${sheetChoice(
     "Print mode", "mode", s.mode,
     [["single", "Single-sided"], ["duplex", "Double-sided"]], true,
-  )}<span class="summary-divider" aria-hidden="true"></span><div class="sheet-margin-value" title="Change sheet margin">${numberField("Sheet margin", "sheetMargin", s.sheetMargin, 0, 100, 0.5, "settings", "mm margin")}</div></div>
-  <details class="sheet-advanced" id="sheet-advanced" ${open ? "open" : ""}>
-    <summary aria-label="More sheet settings" title="More sheet settings">${icon("settings")}<span>More</span></summary>
-    <div class="sheet-advanced-content">
-    ${s.paper === "Custom" ? section("Custom paper", `<div class="field-pair">${numberField("Sheet width", "customWidth", s.customWidth, 40, 1200, 1, "settings")}${numberField("Sheet height", "customHeight", s.customHeight, 40, 1200, 1, "settings")}</div>`) : ""}
-    ${s.mode === "duplex" ? section("Double-sided printing",
-      `${selectField("Printer flip edge", "flip", s.flip, [["long", "Flip on long edge"], ["short", "Flip on short edge"]], "settings")}${selectField("Export / print sides", "output", s.output, [["all", "Both sides"], ["front", "Fronts only"], ["back", "Backs only"]], "settings")}<div class="field-pair">${numberField("Back shift X", "backOffsetX", s.backOffsetX, -20, 20, 0.1, "settings")}${numberField("Back shift Y", "backOffsetY", s.backOffsetY, -20, 20, 0.1, "settings")}</div><p class="field-help">Match the printer's flip edge. Positive X moves right; positive Y moves down on the back. Test one sheet for manual duplex.</p>`,
-    ) : ""}${section("Sheet guides",
-      `${toggle("Cutting grid", "Faint dots in empty areas. Included in print/PDF.", "cuttingGrid", s.cuttingGrid, "settings")}${s.cuttingGrid ? numberField("Grid spacing", "gridSpacing", s.gridSpacing, 2, 20, 1, "settings") : ""}${toggle("Registration crosses", "Crosses 5 mm from sheet corners.", "registration", s.registration, "settings", false)}`,
-    )}${section("Calibration",
-      `<button class="btn" data-action="calibration">${icon("download")} Calibration PDF</button><p class="field-help">A 20 mm square and a ruler to check size.${s.mode === "duplex" ? " Includes a matching back." : ""}</p>`,
-    )}</div>
-  </details>`;
+  )}<span class="summary-divider" aria-hidden="true"></span>${sheetNumber("Sheet margin", "sheetMargin", s.sheetMargin, 0, 100, 0.5, "mm margin")}</div>
+  <button class="sheet-more" data-action="toggle-sheet-options" aria-label="More sheet settings" aria-controls="sheet-advanced" aria-expanded="${open}" title="Show or hide more sheet settings">${icon("settings")}<span>${open ? "Less" : "More"}</span></button>
+  <div class="sheet-advanced-content" id="sheet-advanced" ${open ? "" : "hidden"}>
+    ${s.paper === "Custom" ? `${sheetNumber("Sheet width", "customWidth", s.customWidth, 40, 1200, 1, "mm wide")}${sheetNumber("Sheet height", "customHeight", s.customHeight, 40, 1200, 1, "mm high")}` : ""}
+    ${s.mode === "duplex" ? `${sheetChoice("Printer flip edge", "flip", s.flip, [["long", "Long edge"], ["short", "Short edge"]])}${sheetChoice("Export / print sides", "output", s.output, [["all", "Both sides"], ["front", "Fronts only"], ["back", "Backs only"]])}${sheetNumber("Back shift X", "backOffsetX", s.backOffsetX, -20, 20, 0.1, "mm back X")}${sheetNumber("Back shift Y", "backOffsetY", s.backOffsetY, -20, 20, 0.1, "mm back Y")}` : ""}
+    ${sheetToggle("Cutting grid", "cuttingGrid", s.cuttingGrid, "Faint dots in empty areas, included in print/PDF", true)}
+    ${s.cuttingGrid ? sheetNumber("Grid spacing", "gridSpacing", s.gridSpacing, 2, 20, 1, "mm grid") : ""}
+    ${sheetToggle("Registration marks", "registration", s.registration, "Crosses 5 mm from sheet corners")}
+    <button class="sheet-inline-action" data-action="calibration" title="Download a ruler and 20 mm square to check print size">${icon("download")} Calibration PDF</button>
+  </div>`;
   syncSheetValueWidths();
   syncNumberPickers();
   if (focusedKey)
     $(`[data-target="settings"][data-key="${focusedKey}"]`)?.focus({ preventScroll: true });
 }
-document.addEventListener("click", (event) => {
-  if (!event.target.closest("#sheet-setup") && $("#sheet-advanced")) $("#sheet-advanced").open = false;
-}, true);
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && $("#sheet-advanced")?.open) {
-    $("#sheet-advanced").open = false;
-    $("#sheet-advanced > summary").focus();
+  if (event.key === "Escape" && $("#sheet-advanced") && !$("#sheet-advanced").hidden) {
+    setSheetOptionsOpen(false);
+    $('[data-action="toggle-sheet-options"]').focus();
   }
 });
 function activeProject() {
@@ -889,7 +895,7 @@ function handleField(field, isInput = false) {
     if (field.hasAttribute("data-rebuild")) renderSheetControls();
     else syncSheetValueWidths();
     if (key === "paper" && value === "Custom") {
-      $("#sheet-advanced").open = true;
+      setSheetOptionsOpen(true);
       $('[data-key="customWidth"]').focus();
     }
     syncNumberPickers();
@@ -1272,6 +1278,10 @@ app.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-action]");
   if (!button || button.disabled) return;
   const action = button.dataset.action;
+  if (action === "toggle-sheet-options") {
+    setSheetOptionsOpen($("#sheet-advanced").hidden);
+    return;
+  }
   if (action === "step-number") {
     nudgeNumber(
       button.closest(".number-wrap").querySelector("input"),
