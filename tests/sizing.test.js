@@ -30,22 +30,22 @@ test("matching a PDF removes extra letterboxing inside the content margin", () =
     source,
   );
   assert.equal(b.width, 25);
-  assert.equal(b.height, 48);
+  assert.equal(b.height, 50);
   proportional(b);
 });
 test("linked width and height changes work in both directions", () => {
   const wide = resizeBook(book(), "width", 30, source);
-  assert.equal(wide.height, 58);
+  assert.equal(wide.height, 60);
   proportional(wide);
   const tall = resizeBook(wide, "height", 100, source);
-  assert.equal(tall.width, 51);
+  assert.equal(tall.width, 50);
   proportional(tall);
 });
 test("changing a linked margin preserves artwork scale", () => {
   const before = resizeBook(book(), "lockAspectRatio", true, source);
   const after = resizeBook(before, "margin", 3, source);
-  assert.equal(after.width, 29);
-  assert.equal(after.height, 52);
+  assert.equal(after.width, 31);
+  assert.equal(after.height, 56);
   close(pdfScale(after, source), pdfScale(before, source));
   proportional(after);
 });
@@ -56,8 +56,8 @@ test("percentage scale sets both dimensions and enables their link", () => {
     10,
     source,
   );
-  assert.equal(b.width, 12);
-  assert.equal(b.height, 22);
+  assert.equal(b.width, 10);
+  assert.equal(b.height, 20);
   assert.equal(b.lockAspectRatio, true);
   close(pdfScale(b, source), 10);
   proportional(b);
@@ -151,7 +151,7 @@ test("old projects keep their dimensions while new project files retain the rati
 
 test("the percentage shown for unlinked dimensions matches the actual fitted PDF artwork", () => {
   const b = { ...book(), width: 100, height: 25, lockAspectRatio: false };
-  close(pdfScale(b, source), 11.5);
+  close(pdfScale(b, source), 12.5);
   const linked = resizeBook(b, "lockAspectRatio", true, source);
   assert.equal(linked.width, 100);
   proportional(linked);

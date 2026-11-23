@@ -45,7 +45,7 @@ export function makeBook(id, title, assetId, pageCount) {
     pageCount,
     width: 25,
     height: 35,
-    margin: 1,
+    margin: 0,
     lockAspectRatio: true,
     ranges: "",
     includePages: true,
