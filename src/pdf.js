@@ -1,7 +1,15 @@
 import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
 import * as pdfjs from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-import { mm, outputFaces, parseRanges } from "./layout.js";
+import { mm, outputFaces } from "./layout.js";
+import { makeCoverLettering } from "./cover.js";
+import {
+  fitInside,
+  coverPanels,
+  hasArtwork,
+  cutGuides,
+  registrationGuides,
+} from "./render-geometry.js";
 import { displayedPageSize } from "./sizing.js";
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 export async function inspectPdfDetails(bytes) {
@@ -108,40 +116,7 @@ async function generatedText(
   role,
   subtitle = "",
 ) {
-  // Browser fonts preserve non-Latin book titles as well as Latin text.
-  const scale = 12,
-    canvas = document.createElement("canvas");
-  canvas.width = Math.ceil(width * scale);
-  canvas.height = Math.ceil(height * scale);
-  const ctx = canvas.getContext("2d");
-  ctx.scale(scale, scale);
-  ctx.fillStyle = ink;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  if (role === "front") {
-    const lines = wrapText(text, 16),
-      size = Math.min(width * 0.14, height * 0.09);
-    ctx.font = `italic ${size}px Georgia, serif`;
-    lines.forEach((line, i) => {
-      ctx.fillText(
-        line,
-        width / 2,
-        height * 0.42 + (i - (lines.length - 1) / 2) * size * 1.25,
-        width * 0.78,
-      );
-    });
-    ctx.font = `${width * 0.043}px system-ui, sans-serif`;
-    ctx.fillText(subtitle, width / 2, height * 0.84, width * 0.82);
-  } else if (role === "spine") {
-    ctx.translate(width / 2, height / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.font = `${Math.min(width * 0.5, 2)}px Georgia, serif`;
-    ctx.fillText(text, 0, 0, height * 0.83);
-  } else {
-    ctx.font = `${width * 0.065}px Georgia, serif`;
-    ctx.fillText("A little world.", width / 2, height * 0.46);
-    ctx.fillText("Yours to make.", width / 2, height * 0.53);
-  }
+  const canvas = makeCoverLettering(text, width, height, ink, role, subtitle);
   return doc.embedPng(
     await (await fetch(canvas.toDataURL("image/png"))).arrayBuffer(),
   );
@@ -211,11 +186,12 @@ export async function buildPdf(
           360;
       const sw = rotation % 180 ? image.height : image.width,
         sh = rotation % 180 ? image.width : image.height;
-      const scale = Math.min(w / sw, h / sh),
+      const fit = fitInside(sw, sh, w, h),
+        scale = fit.scale,
         dw = image.width * scale,
         dh = image.height * scale;
-      let dx = x + (w - sw * scale) / 2,
-        dy = y + (h - sh * scale) / 2;
+      let dx = x + fit.x,
+        dy = y + fit.y;
       if (rotation === 90) dy += dw;
       else if (rotation === 180) {
         dx += dw;
@@ -237,10 +213,11 @@ export async function buildPdf(
             : await doc.embedJpg(asset.bytes),
         );
       const image = embedded.get(id),
-        scale = Math.min(w / image.width, h / image.height);
+        fit = fitInside(image.width, image.height, w, h),
+        scale = fit.scale;
       page.drawImage(image, {
-        x: x + (w - image.width * scale) / 2,
-        y: y + (h - image.height * scale) / 2,
+        x: x + fit.x,
+        y: y + fit.y,
         width: image.width * scale,
         height: image.height * scale,
       });
@@ -296,65 +273,27 @@ export async function buildPdf(
       );
     page.drawImage(textImages.get(key), { x, y, width: w, height: h });
   }
-  function trimMarks(page, piece, book, x, y, w, h) {
-    const mark =
-      piece.kind === "cover" ||
-      book.markPages === "all" ||
-      (book.markPages === "first" && piece.page === 1) ||
-      (book.markPages === "odd" && piece.page % 2 === 1) ||
-      (book.markPages === "even" && piece.page % 2 === 0) ||
-      (book.markPages === "custom" &&
-        parseRanges(book.markRanges, book.pageCount).includes(piece.page));
-    if (book.border)
-      page.drawRectangle({
-        x,
-        y,
-        width: w,
-        height: h,
-        borderWidth: mm(0.06),
-        borderColor: rgb(0.35, 0.35, 0.35),
+  function drawGuide(page, shape, x = 0, yTop = mm(layout.height)) {
+    if (shape.type === "line")
+      page.drawLine({
+        start: { x: x + mm(shape.x1), y: yTop - mm(shape.y1) },
+        end: { x: x + mm(shape.x2), y: yTop - mm(shape.y2) },
+        thickness: mm(shape.lineWidth),
+        color: color(shape.stroke),
       });
-    if (book.marks === "none" || !mark) return;
-    const len = mm(0.65),
-      inset = mm(0.12),
-      ink = rgb(0.2, 0.2, 0.2);
-    for (const [corner, cx, cy, sx, sy] of [
-      ["tl", x + inset, y + h - inset, 1, -1],
-      ["tr", x + w - inset, y + h - inset, -1, -1],
-      ["bl", x + inset, y + inset, 1, 1],
-      ["br", x + w - inset, y + inset, -1, 1],
-    ]) {
-      if (
-        book.markCorner !== "all" &&
-        book.markCorner !==
-          (piece.rotation === 180
-            ? { tl: "br", tr: "bl", bl: "tr", br: "tl" }[corner]
-            : corner)
-      )
-        continue;
-      if (book.marks === "square")
-        page.drawRectangle({
-          x: cx + (sx < 0 ? -len / 2 : 0),
-          y: cy + (sy < 0 ? -len / 2 : 0),
-          width: len / 2,
-          height: len / 2,
-          color: ink,
-        });
-      else {
-        page.drawLine({
-          start: { x: cx, y: cy },
-          end: { x: cx + sx * len, y: cy },
-          thickness: mm(0.06),
-          color: ink,
-        });
-        page.drawLine({
-          start: { x: cx, y: cy },
-          end: { x: cx, y: cy + sy * len },
-          thickness: mm(0.06),
-          color: ink,
-        });
-      }
-    }
+    else
+      page.drawRectangle({
+        x: x + mm(shape.x),
+        y: yTop - mm(shape.y + shape.height),
+        width: mm(shape.width),
+        height: mm(shape.height),
+        ...(shape.type === "fill"
+          ? { color: color(shape.fill) }
+          : {
+              borderColor: color(shape.stroke),
+              borderWidth: mm(shape.lineWidth),
+            }),
+      });
   }
   for (let i = 0; i < faces.length; i++) {
     const face = faces[i],
@@ -378,85 +317,29 @@ export async function buildPdf(
           piece.rotation || 0,
         );
       } else {
-        const c = book.cover,
-          panel = mm(book.width + c.overhang * 2),
-          spine = mm(c.spine);
-        if (c.mode === "wrap" && c.wrap.type !== "generated")
+        const c = book.cover;
+        if (c.mode === "wrap" && hasArtwork(c.wrap))
           await source(c.wrap, book, page, x, y, w, h);
-        else {
-          await coverPanel(
-            page,
-            book,
-            "back",
-            x,
-            y,
-            panel,
-            h,
-            c.mode === "separate" ? c.back : null,
-          );
-          if (spine > 0)
+        else
+          for (const panel of coverPanels(book)) {
             await coverPanel(
               page,
               book,
-              "spine",
-              x + panel,
+              panel.role,
+              x + mm(panel.x),
               y,
-              spine,
+              mm(panel.width),
               h,
-              c.mode === "separate" ? c.spineSource : null,
+              c.mode === "separate" ? panel.source : null,
             );
-          await coverPanel(
-            page,
-            book,
-            "front",
-            x + panel + spine,
-            y,
-            panel,
-            h,
-            c.mode === "separate" ? c.front : null,
-          );
-        }
-        if (book.marks !== "none")
-          for (const fx of [x + panel, x + panel + spine]) {
-            page.drawLine({
-              start: { x: fx, y },
-              end: { x: fx, y: y + mm(0.8) },
-              thickness: mm(0.06),
-              color: rgb(0.5, 0.5, 0.5),
-            });
-            page.drawLine({
-              start: { x: fx, y: y + h },
-              end: { x: fx, y: y + h - mm(0.8) },
-              thickness: mm(0.06),
-              color: rgb(0.5, 0.5, 0.5),
-            });
           }
       }
-      trimMarks(page, piece, book, x, y, w, h);
+      for (const shape of cutGuides(piece, book))
+        drawGuide(page, shape, x, y + h);
     }
-    if (settings.registration) {
-      for (const [rx, ry] of [
-        [5, 5],
-        [layout.width - 5, 5],
-        [5, layout.height - 5],
-        [layout.width - 5, layout.height - 5],
-      ]) {
-        const cx = mm(rx),
-          cy = mm(ry);
-        page.drawLine({
-          start: { x: cx - mm(1), y: cy },
-          end: { x: cx + mm(1), y: cy },
-          thickness: 0.2,
-          color: rgb(0.5, 0.5, 0.5),
-        });
-        page.drawLine({
-          start: { x: cx, y: cy - mm(1) },
-          end: { x: cx, y: cy + mm(1) },
-          thickness: 0.2,
-          color: rgb(0.5, 0.5, 0.5),
-        });
-      }
-    }
+    if (settings.registration)
+      for (const shape of registrationGuides(layout.width, layout.height))
+        drawGuide(page, shape);
     onProgress(i + 1, faces.length);
   }
   return doc.save();

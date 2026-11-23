@@ -42,7 +42,7 @@ No hosting secrets or environment variables are needed.
 - **Cutting**: choose tiny corner lines, filled squares, or no marks. Place them in any corner on all pages, odd/even pages, PDF page 1, or custom page ranges. You can also add a fine outline. Cover marks include small spine-fold ticks.
 - **Number controls**: use the visible + / - buttons, type a value, or press Up / Down in a number field. The controls respect each setting's limits, including linked page sizes.
 - **Sheet setup**: choose A5, A4, A3, US Letter, US Legal, or a custom sheet; orientation; safe printer margins; and print mode. Registration crosses and back-side offsets help with alignment.
-- **Preview**: browse every sheet side, zoom, open the sheet overview, or click a piece to edit its book. The main preview renders the same PDF used for export.
+- **Preview**: browse every sheet side, zoom, open the sheet overview, or click a piece to edit its book. The live preview draws only the sheet you are viewing, reusing cached page images as you change dimensions and spacing. New pages load progressively. Preview and export share millimeter geometry, artwork fitting, and cutting guides; the full vector PDF is built when you print or export.
 
 Turn off **Include book pages** to make a cover-only miniature. Turn off **Include cover** for pages only.
 
@@ -76,10 +76,13 @@ Use a recent Chrome, Edge, Firefox, or Safari. If your browser does not support 
 
 - `src/layout.js`: millimeter geometry, ranges, packing, duplex transformations, output filtering.
 - `src/pdf.js`: source embedding, cover artwork, PDF export, calibration.
+- `src/preview.js` and `src/preview-cache.js`: progressive visible-sheet rendering and bounded page-image caching.
+- `src/render-geometry.js` and `src/cover.js`: artwork fitting, guides, and cover lettering shared by preview and export.
 - `src/sizing.js`: PDF aspect ratios, linked dimensions, percentage scaling, and number increments.
 - `src/storage.js`: IndexedDB and portable project validation.
 - `src/main.js`: workbench UI, files, preview, printing, and project actions.
 - `tests/layout.test.js`: layout and project-validation regression tests.
+- `tests/preview.test.js`: cache reuse, concurrency, stale work, eviction, and shared drawing geometry.
 - `tests/sizing.test.js`: linked dimensions, percentage scales, margins, rotation, and number-picker limits.
 
 Built with Vite, pdf-lib, and PDF.js. DM Sans and Instrument Serif are bundled locally. Third-party license notices are included in `public/licenses/`.

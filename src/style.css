@@ -758,12 +758,19 @@ strong {
 }
 .preview-loading {
   position: absolute;
-  inset: 0;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  background: #ffffffde;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 20px;
+  background: #ffffffed;
+  box-shadow: 0 2px 10px #35284915;
+  pointer-events: none;
+  white-space: nowrap;
   z-index: 3;
   font-size: 12px;
   color: #9b91aa;

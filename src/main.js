@@ -1,4 +1,5 @@
 import "./style.css";
+import { createSheetPreview } from "./preview.js";
 import { icon } from "./icons.js";
 import {
   computeLayout,
@@ -48,14 +49,13 @@ let selected = null,
   zoom = 1,
   revision = 0;
 let layout,
-  previewCache,
-  buildJob,
+  exportCache,
+  exportJob,
   saveTimer,
   previewTimer,
-  renderTask,
-  renderSerial = 0,
   busy = false,
   storageOkay = true;
+const livePreview = createSheetPreview();
 const app = $("#app");
 app.innerHTML = `
 <header class="app-header">
@@ -602,20 +602,15 @@ function persist() {
 }
 function changed({ form = false } = {}) {
   revision++;
-  renderSerial++;
-  renderTask?.cancel();
+  livePreview.cancel();
   persist();
   renderLibrary();
   if (form) renderInspector();
   refreshLayout();
-  clearTimeout(previewTimer);
-  if (layout.faces.length && !layout.errors.length) {
-    $("#preview-loading").hidden = false;
-    previewTimer = setTimeout(
-      () => updatePreview().catch(showPreviewError),
-      280,
-    );
-  }
+  cancelAnimationFrame(previewTimer);
+  previewTimer = requestAnimationFrame(() =>
+    updatePreview().catch(showPreviewError),
+  );
 }
 function refreshLayout() {
   layout = computeLayout(state.books, state.settings);
@@ -652,7 +647,7 @@ function refreshLayout() {
     button.disabled = busy || !layout.faces.length || !!layout.errors.length;
   if (!layout.faces.length || layout.errors.length) {
     $("#preview-loading").hidden = true;
-    renderTask?.cancel();
+    livePreview.cancel();
   }
   $("#paper-width").textContent = `${layout.width} mm`;
   $("#paper-height").textContent = `${layout.height} mm`;
@@ -688,8 +683,8 @@ function resizePreview() {
     zoom === 1 ? "Fit" : `${Math.round(zoom * 100)}%`;
 }
 async function ensurePdf() {
-  if (previewCache?.revision === revision) return previewCache;
-  if (buildJob?.revision === revision) return buildJob.promise;
+  if (exportCache?.revision === revision) return exportCache;
+  if (exportJob?.revision === revision) return exportJob.promise;
   const rev = revision,
     project = {
       books: [...state.books],
@@ -704,25 +699,15 @@ async function ensurePdf() {
       project.settings,
       currentLayout,
     );
-    const doc = await pdfjs.getDocument({
-      data: bytes.slice(),
-      isEvalSupported: false,
-    }).promise;
-    const result = { revision: rev, bytes, doc };
-    if (rev === revision) {
-      const previous = previewCache;
-      previewCache = result;
-      previous?.doc.destroy().catch(() => {});
-    } else {
-      doc.destroy().catch(() => {});
-    }
+    const result = { revision: rev, bytes };
+    if (rev === revision) exportCache = result;
     return result;
   })();
-  buildJob = { revision: rev, promise };
+  exportJob = { revision: rev, promise };
   try {
     return await promise;
   } finally {
-    if (buildJob?.revision === rev) buildJob = null;
+    if (exportJob?.revision === rev) exportJob = null;
   }
 }
 function showPreviewError(error) {
@@ -733,32 +718,20 @@ function showPreviewError(error) {
 }
 async function updatePreview() {
   if (!layout.faces.length || layout.errors.length) return;
-  const serial = ++renderSerial,
-    rev = revision;
-  $("#preview-loading").hidden = false;
-  const result = await ensurePdf();
-  if (serial !== renderSerial || rev !== revision) return;
-  renderTask?.cancel();
-  const page = await result.doc.getPage(faceIndex + 1);
-  if (serial !== renderSerial) return;
-  const viewport = page.getViewport({
-    scale: Math.min(2.8, 1800 / page.getViewport({ scale: 1 }).width),
-  });
-  const canvas = $("#preview-canvas");
-  canvas.width = Math.ceil(viewport.width);
-  canvas.height = Math.ceil(viewport.height);
-  renderTask = page.render({
-    canvasContext: canvas.getContext("2d"),
-    viewport,
-  });
-  try {
-    await renderTask.promise;
-  } catch (e) {
-    if (e.name !== "RenderingCancelledException") throw e;
-    return;
-  }
-  if (serial !== renderSerial || rev !== revision) return;
-  $("#preview-loading").hidden = true;
+  livePreview.render(
+    $("#preview-canvas"),
+    state.books,
+    state.assets,
+    state.settings,
+    layout,
+    layout.faces[faceIndex],
+    (pending, error) => {
+      $("#preview-loading").hidden = !pending;
+      $("#preview-loading span:last-child").textContent =
+        `Loading ${pending} page${pending === 1 ? "" : "s"}...`;
+      if (error) showPreviewError(error);
+    },
+  );
   renderOverlays();
   updateFaceLabels();
 }
