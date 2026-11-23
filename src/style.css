@@ -2854,3 +2854,105 @@ input.scale-slider {
   height: 26px;
   padding: 4px;
 }
+
+/* Sheet controls stay with the preview; the inspector always edits the book. */
+.studio {
+  overflow-y: auto;
+}
+.sheet-setup {
+  flex-shrink: 0;
+  margin: 18px 0 0;
+  padding: 16px;
+  border: 1px solid #ded9ea;
+  border-radius: 10px;
+  background: #ffffffbd;
+}
+.sheet-quick-controls,
+.sheet-extra-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  align-items: end;
+  gap: 12px;
+}
+.sheet-extra-controls {
+  margin-top: 12px;
+}
+.sheet-extra-controls > .field-pair {
+  grid-column: span 2;
+  gap: 12px;
+}
+.sheet-setup .field,
+.sheet-setup .number-field {
+  margin: 0;
+  min-width: 0;
+}
+.sheet-setup .field > span,
+.sheet-setup .number-field > label {
+  font-size: 13px;
+  color: #514a60;
+}
+.sheet-setup select {
+  width: 100%;
+  font-size: 14px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+.sheet-advanced {
+  border-top: 1px solid #e6e2ed;
+  margin-top: 14px;
+  padding-top: 10px;
+}
+.sheet-advanced > summary {
+  width: fit-content;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--purple);
+  padding: 3px 0;
+}
+.sheet-advanced > summary:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 4px;
+}
+.sheet-advanced-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.sheet-advanced-content .settings-section {
+  margin: 0;
+  padding: 14px;
+  border: 1px solid #e6e2ed;
+  border-radius: 8px;
+  background: white;
+}
+.sheet-advanced-content h3 {
+  font-size: 14px;
+  margin: 0 0 12px;
+  color: var(--text);
+}
+.sheet-advanced-content .field-help {
+  margin-bottom: 0;
+}
+.sheet-advanced-content .toggle-row {
+  margin: 0 0 12px;
+  gap: 12px;
+}
+.sheet-advanced-content .number-field + .toggle-row {
+  margin-top: 14px;
+}
+@media (max-width: 600px) {
+  .sheet-setup {
+    padding: 12px;
+  }
+  .sheet-quick-controls,
+  .sheet-extra-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sheet-advanced-content {
+    grid-template-columns: 1fr;
+  }
+}

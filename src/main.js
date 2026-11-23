@@ -79,8 +79,8 @@ app.innerHTML = `
     <div class="library-footer"><div class="privacy-note"><span class="privacy-icon" aria-hidden="true">${icon("shield")}</span><strong>Files stay on your device</strong></div><button class="text-btn" data-action="help">Help</button></div>
   </aside>
   <main class="studio">
-    <div class="studio-heading"><h2>Print layout</h2><button class="btn sheet-button" data-action="sheet-setup">${icon("settings")} Sheet setup</button></div>
-    <div class="sheet-summary" id="sheet-summary"></div>
+    <div class="studio-heading"><h2>Print layout</h2></div>
+    <section class="sheet-setup" id="sheet-setup" aria-label="Sheet setup"></section>
     <div class="preview-toolbar"><div class="preview-title">${icon("eye")} <strong>Preview</strong></div><div class="zoom-controls"><button class="icon-btn" data-action="zoom-out" aria-label="Zoom out">${icon("minus")}</button><button class="text-btn" data-action="zoom-reset" id="zoom-label">Fit</button><button class="icon-btn" data-action="zoom-in" aria-label="Zoom in">${icon("plus")}</button></div></div>
     <div id="layout-messages" class="layout-messages" aria-live="polite"></div>
     <div class="preview-stage" id="preview-stage"><div class="sheet-scene" id="sheet-scene"><div class="dimension horizontal" id="paper-width"></div><div class="dimension vertical"><span id="paper-height"></span></div><div class="paper" id="paper"><canvas id="preview-canvas" aria-label="Print sheet preview"></canvas><div id="piece-overlays"></div><div class="preview-loading" id="preview-loading"><span class="spinner"></span><span>Loading preview...</span></div></div></div><div class="empty-preview" id="empty-preview" hidden><span class="empty-icon">${icon("book")}</span><h3>Add a book</h3><p>Add a PDF or try the sample.</p><button class="btn primary" data-action="add-books">${icon("plus")} Add a PDF</button><button class="text-btn" data-action="add-sample">Try the sample book</button></div></div>
@@ -168,11 +168,6 @@ function renderLibrary() {
 function renderInspector() {
   const el = $("#inspector"),
     book = bookNow();
-  if (inspectorMode === "sheet") {
-    renderSheetInspector();
-    syncNumberPickers();
-    return;
-  }
   if (!book) {
     el.innerHTML = `<div class="inspector-empty">${icon("settings")}<h3>Book settings</h3><p>Add or select a book to adjust its pages, cover, and cutting guides.</p><button class="btn" data-action="sheet-setup">Sheet setup</button></div>`;
     return;
@@ -524,64 +519,41 @@ function cuttingPanel(b) {
     )
   );
 }
-function renderSheetInspector() {
-  const s = state.settings;
-  $("#inspector").innerHTML =
-    `<div class="inspector-head"><div class="inspector-title"><h2>Sheet setup</h2><button class="icon-btn" data-action="back-to-book" aria-label="Back to book details">${icon("close")}</button></div></div><div class="inspector-content">${section(
-      "Paper",
-      `${selectField(
-        "Paper size",
-        "paper",
-        s.paper,
-        [
-          ["A5", "A5 - 148 x 210 mm"],
-          ["A4", "A4 - 210 x 297 mm"],
-          ["A3", "A3 - 297 x 420 mm"],
-          ["Letter", "US Letter - 8.5 x 11 in"],
-          ["Legal", "US Legal - 8.5 x 14 in"],
-          ["Custom", "Custom size"],
-        ],
-        "settings",
-        true,
-      )}${s.paper === "Custom" ? `<div class="field-pair">${numberField("Width", "customWidth", s.customWidth, 40, 1200, 1, "settings")}${numberField("Height", "customHeight", s.customHeight, 40, 1200, 1, "settings")}</div>` : ""}<div class="segmented" role="group" aria-label="Paper orientation">${["portrait", "landscape"].map((v) => `<button data-action="orientation" data-value="${v}" class="${s.orientation === v ? "active" : ""}"><span class="orientation-icon ${v}"></span>${v[0].toUpperCase() + v.slice(1)}</button>`).join("")}</div>${numberField("Safe sheet margin", "sheetMargin", s.sheetMargin, 0, 100, 0.5, "settings")}`,
-    )}${section(
-      "Print mode",
-      `<div class="mode-choices">${[
-        ["single", "Single-sided", "Continuous rows. Glue blank backs."],
-        ["duplex", "Double-sided", "Paired leaves. Print front and back."],
-      ]
-        .map(
-          ([v, title, detail]) =>
-            `<button class="mode-choice ${s.mode === v ? "active" : ""}" data-action="print-mode" data-value="${v}"><span class="radio-dot"></span><span><strong>${title}</strong><small>${detail}</small></span></button>`,
-        )
-        .join("")}</div>${
-        s.mode === "duplex"
-          ? selectField(
-              "Printer flip edge",
-              "flip",
-              s.flip,
-              [
-                ["long", "Flip on long edge"],
-                ["short", "Flip on short edge"],
-              ],
-              "settings",
-            ) +
-            `<p class="field-help">Choose the same flip edge in your printer dialog. Positions mirror across that physical edge. Back artwork also rotates when needed so cut leaves read upright.</p>` +
-            selectField(
-              "Export / print sides",
-              "output",
-              s.output,
-              [
-                ["all", "Both sides - front, back, front, back"],
-                ["front", "Fronts only - manual duplex pass 1"],
-                ["back", "Backs only - manual duplex pass 2"],
-              ],
-              "settings",
-            ) +
-            `<p class="field-help">For manual duplex, test your tray's reinsertion order with one sheet first. Blank cover backs are kept.</p>`
-          : ""
-      }`,
-    )}${s.mode === "duplex" ? section("Back alignment", `<div class="field-pair">${numberField("Back shift X", "backOffsetX", s.backOffsetX, -20, 20, 0.1, "settings")}${numberField("Back shift Y", "backOffsetY", s.backOffsetY, -20, 20, 0.1, "settings")}</div><p class="field-help">Positive X moves right; positive Y moves down, as viewed on the back sheet. These compensate for printer alignment.</p>`) : ""}${section("Sheet guides", `${toggle("Cutting grid", "Faint dots in empty areas. Included in print/PDF.", "cuttingGrid", s.cuttingGrid, "settings")}${s.cuttingGrid ? numberField("Grid spacing", "gridSpacing", s.gridSpacing, 2, 20, 1, "settings") : ""}`)}${section("Calibration", `${toggle("Registration crosses", "Small crosses 5 mm from sheet corners.", "registration", s.registration, "settings", false)}<button class="btn full" data-action="calibration">${icon("download")} Calibration PDF</button><p class="field-help">Includes a 20 mm square and a ruler. Duplex calibration includes a matching back.</p>`)}</div>`;
+function renderSheetControls() {
+  const s = state.settings,
+    open = $("#sheet-advanced")?.open || false,
+    focusedKey = document.activeElement?.closest("#sheet-setup")
+      ? document.activeElement.dataset.key
+      : null;
+  $("#sheet-setup").innerHTML = `<div class="sheet-quick-controls">${selectField(
+    "Paper size", "paper", s.paper,
+    [["A5", "A5"], ["A4", "A4"], ["A3", "A3"], ["Letter", "US Letter"], ["Legal", "US Legal"], ["Custom", "Custom"]],
+    "settings", true,
+  )}${selectField("Orientation", "orientation", s.orientation,
+    [["portrait", "Portrait"], ["landscape", "Landscape"]], "settings",
+  )}${selectField("Print mode", "mode", s.mode,
+    [["single", "Single-sided"], ["duplex", "Double-sided"]], "settings", true,
+  )}${numberField("Sheet margin", "sheetMargin", s.sheetMargin, 0, 100, 0.5, "settings")}</div>
+  ${s.paper === "Custom" || s.mode === "duplex" ? `<div class="sheet-extra-controls">${
+    s.paper === "Custom" ? `<div class="field-pair">${numberField("Sheet width", "customWidth", s.customWidth, 40, 1200, 1, "settings")}${numberField("Sheet height", "customHeight", s.customHeight, 40, 1200, 1, "settings")}</div>` : ""
+  }${s.mode === "duplex" ? `${selectField("Printer flip edge", "flip", s.flip,
+    [["long", "Flip on long edge"], ["short", "Flip on short edge"]], "settings",
+  )}${selectField("Export / print sides", "output", s.output,
+    [["all", "Both sides"], ["front", "Fronts only"], ["back", "Backs only"]], "settings",
+  )}` : ""}</div>` : ""}
+  <details class="sheet-advanced" id="sheet-advanced" ${open ? "open" : ""}>
+    <summary>Advanced sheet settings</summary>
+    <div class="sheet-advanced-content">${section("Sheet guides",
+      `${toggle("Cutting grid", "Faint dots in empty areas. Included in print/PDF.", "cuttingGrid", s.cuttingGrid, "settings")}${s.cuttingGrid ? numberField("Grid spacing", "gridSpacing", s.gridSpacing, 2, 20, 1, "settings") : ""}${toggle("Registration crosses", "Crosses 5 mm from sheet corners.", "registration", s.registration, "settings", false)}`,
+    )}${s.mode === "duplex" ? section("Back alignment",
+      `<div class="field-pair">${numberField("Back shift X", "backOffsetX", s.backOffsetX, -20, 20, 0.1, "settings")}${numberField("Back shift Y", "backOffsetY", s.backOffsetY, -20, 20, 0.1, "settings")}</div><p class="field-help">Positive X moves right; positive Y moves down on the back. Match the printer's flip edge. For manual duplex, print fronts first, then backs; test your tray's reinsertion order.</p>`,
+    ) : ""}${section("Calibration",
+      `<button class="btn" data-action="calibration">${icon("download")} Calibration PDF</button><p class="field-help">A 20 mm square and a ruler to check size.${s.mode === "duplex" ? " Includes a matching back." : ""}</p>`,
+    )}</div>
+  </details>`;
+  syncNumberPickers();
+  if (focusedKey)
+    $(`[data-target="settings"][data-key="${focusedKey}"]`)?.focus({ preventScroll: true });
 }
 function activeProject() {
   const ids = new Set(state.books.map((b) => b.assetId));
@@ -649,8 +621,6 @@ function refreshLayout() {
   faceIndex = Math.max(0, Math.min(faceIndex, layout.faces.length - 1));
   const s = state.settings,
     duplex = s.mode === "duplex";
-  $("#sheet-summary").innerHTML =
-    `<button data-action="sheet-setup">${icon("file")}<span>${s.paper === "Custom" ? `${layout.width} x ${layout.height} mm` : esc(s.paper)} <span class="muted">/ ${s.orientation}</span></span></button><span class="summary-divider"></span><button data-action="sheet-setup">${icon("copy")} ${duplex ? "Double-sided" : "Single-sided"}</button><span class="summary-divider"></span><button data-action="sheet-setup"><span class="margin-icon"></span> ${s.sheetMargin} mm safe margin</button>`;
   $("#layout-messages").innerHTML = [
     ...layout.errors.map(
       (t) =>
@@ -887,7 +857,8 @@ function handleField(field, isInput = false) {
       return;
     if (field.value === "" || !Number.isFinite(value)) {
       toast("Enter a number for this setting.", true);
-      renderInspector();
+      if (field.dataset.target === "settings") renderSheetControls();
+      else renderInspector();
       return;
     }
     value = Math.min(Number(field.max), Math.max(Number(field.min), value));
@@ -899,7 +870,9 @@ function handleField(field, isInput = false) {
   }
   if (field.dataset.target === "settings") {
     state.settings = { ...state.settings, [key]: value };
-    changed({ form: field.hasAttribute("data-rebuild") });
+    if (key === "mode") faceIndex = 0;
+    changed({ form: key === "mode" });
+    if (field.hasAttribute("data-rebuild")) renderSheetControls();
     syncNumberPickers();
   } else if (
     ["width", "height", "margin", "pdfScale", "lockAspectRatio"].includes(key)
@@ -1105,6 +1078,7 @@ $("#project-input").addEventListener("change", async (event) => {
     inspectorMode = "book";
     faceIndex = 0;
     zoom = 1;
+    renderSheetControls();
     changed({ form: true });
     toast("Project opened.");
   } catch (error) {
@@ -1305,24 +1279,8 @@ app.addEventListener("click", async (event) => {
     return;
   }
   if (action === "sheet-setup") {
-    inspectorMode = "sheet";
-    renderLibrary();
-    renderInspector();
-    return;
-  }
-  if (action === "back-to-book") {
-    inspectorMode = "book";
-    renderLibrary();
-    renderInspector();
-    return;
-  }
-  if (action === "orientation" || action === "print-mode") {
-    state.settings = {
-      ...state.settings,
-      [action === "orientation" ? "orientation" : "mode"]: button.dataset.value,
-    };
-    faceIndex = 0;
-    changed({ form: true });
+    $("#sheet-setup").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    $('[data-target="settings"][data-key="mode"]').focus({ preventScroll: true });
     return;
   }
   if (action === "cover-color") {
@@ -1557,6 +1515,7 @@ async function init() {
       Object.assign(asset, await inspectPdfDetails(asset.bytes));
   }
   selected = state.books[0]?.id;
+  renderSheetControls();
   renderLibrary();
   renderInspector();
   refreshLayout();
