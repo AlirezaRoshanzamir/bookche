@@ -175,7 +175,8 @@ export function normalizeProject(data, encoded = false) {
       color: hex(c.color),
       ink: hex(c.ink || "#f7edd6"),
       gradient: c.gradient !== false,
-      subtitle: text(c.subtitle, 48),
+      spineMode: oneOf(c.spineMode, ["title", "custom", "none"], "title"),
+      spineText: text(c.spineText, 160),
       backText:
         typeof c.backText === "string"
           ? text(c.backText, 500)

@@ -61,7 +61,7 @@ const app = $("#app");
 app.innerHTML = `
 <header class="app-header">
   <a class="brand" href="./" aria-label="Bookche home"><span class="brand-symbol">${icon("book")}</span><span><strong>bookche<span class="brand-period">.</span></strong><small>MINIATURE BOOK STUDIO</small></span></a>
-  <div class="header-note">A little world, made by you.</div>
+
   <nav class="header-actions" aria-label="Project actions">
     <span class="save-status" id="save-status">${icon("check")} <span>Saved on this device</span></span>
     <button class="btn subtle" data-action="open-project" title="Open a saved Bookche project">${icon("folder")}<span>Open</span></button>
@@ -71,20 +71,20 @@ app.innerHTML = `
 </header>
 <div class="workspace">
   <aside class="library" aria-label="Book library">
-    <div class="library-heading"><span class="eyebrow">YOUR WORKBENCH</span><h1>Little books<span id="book-count">0</span></h1><p>Big stories. Smaller scale.</p></div>
-    <button class="upload-zone" id="upload-zone" data-action="add-books">${icon("plus")}<strong>Add your PDFs</strong><span>Choose files or drop them here</span><small>Files stay on your device</small></button>
+    <div class="library-heading"><h1>Books<span id="book-count">0</span></h1></div>
+    <button class="upload-zone" id="upload-zone" data-action="add-books">${icon("plus")}<strong>Add your PDFs</strong><span>Choose files or drop them here</span></button>
     <div class="library-label"><span>IN THIS PROJECT</span><button class="text-btn" data-action="add-sample" title="Add the sample book">Try a sample</button></div>
     <div class="book-list" id="book-list"></div>
-    <div class="library-footer"><div class="privacy-icon">${icon("shield")}</div><strong>Made here. Stays here.</strong><p>Your books never leave your browser. No account, no uploads.</p><button class="text-btn" data-action="help">A small guide to getting started</button></div>
+    <div class="library-footer"><div class="privacy-icon">${icon("shield")}</div><strong>Files stay on your device</strong><button class="text-btn" data-action="help">Help</button></div>
   </aside>
   <main class="studio">
-    <div class="studio-heading"><div><div class="eyebrow">FROM PDF TO PAPER</div><h2>Your next small adventure</h2></div><button class="btn sheet-button" data-action="sheet-setup">${icon("settings")} Sheet setup</button></div>
+    <div class="studio-heading"><h2>Print layout</h2><button class="btn sheet-button" data-action="sheet-setup">${icon("settings")} Sheet setup</button></div>
     <div class="sheet-summary" id="sheet-summary"></div>
-    <div class="preview-toolbar"><div class="preview-title">${icon("eye")} <strong>Print preview</strong><span class="preview-badge">ACTUAL LAYOUT</span></div><div class="zoom-controls"><button class="icon-btn" data-action="zoom-out" aria-label="Zoom out">${icon("minus")}</button><button class="text-btn" data-action="zoom-reset" id="zoom-label">Fit</button><button class="icon-btn" data-action="zoom-in" aria-label="Zoom in">${icon("plus")}</button></div></div>
+    <div class="preview-toolbar"><div class="preview-title">${icon("eye")} <strong>Preview</strong></div><div class="zoom-controls"><button class="icon-btn" data-action="zoom-out" aria-label="Zoom out">${icon("minus")}</button><button class="text-btn" data-action="zoom-reset" id="zoom-label">Fit</button><button class="icon-btn" data-action="zoom-in" aria-label="Zoom in">${icon("plus")}</button></div></div>
     <div id="layout-messages" class="layout-messages" aria-live="polite"></div>
-    <div class="preview-stage" id="preview-stage"><div class="sheet-scene" id="sheet-scene"><div class="dimension horizontal" id="paper-width"></div><div class="dimension vertical" id="paper-height"></div><div class="paper" id="paper"><canvas id="preview-canvas" aria-label="Print sheet preview"></canvas><div id="piece-overlays"></div><div class="preview-loading" id="preview-loading"><span class="spinner"></span><span>Arranging little pages...</span></div></div></div><div class="empty-preview" id="empty-preview" hidden><span class="empty-icon">${icon("book")}</span><h3>A little book starts here</h3><p>Add a PDF to make your first miniature.<br>Or explore with our ready-to-print sample.</p><button class="btn primary" data-action="add-books">${icon("plus")} Add a PDF</button><button class="text-btn" data-action="add-sample">Try the sample book</button></div></div>
+    <div class="preview-stage" id="preview-stage"><div class="sheet-scene" id="sheet-scene"><div class="dimension horizontal" id="paper-width"></div><div class="dimension vertical" id="paper-height"></div><div class="paper" id="paper"><canvas id="preview-canvas" aria-label="Print sheet preview"></canvas><div id="piece-overlays"></div><div class="preview-loading" id="preview-loading"><span class="spinner"></span><span>Loading preview...</span></div></div></div><div class="empty-preview" id="empty-preview" hidden><span class="empty-icon">${icon("book")}</span><h3>Add a book</h3><p>Add a PDF or try the sample.</p><button class="btn primary" data-action="add-books">${icon("plus")} Add a PDF</button><button class="text-btn" data-action="add-sample">Try the sample book</button></div></div>
     <div class="preview-pagination"><span id="preview-info"></span><div class="page-navigation"><button class="icon-btn" data-action="prev-face" aria-label="Previous sheet side">${icon("left")}</button><span id="face-label">Sheet 1</span><button class="icon-btn" data-action="next-face" aria-label="Next sheet side">${icon("chevron")}</button></div><button class="text-btn" data-action="all-sheets">${icon("grid")} All sheets</button></div>
-    <div class="print-bar"><div class="print-total"><span class="print-icon">${icon("file")}</span><div><strong id="output-total">Ready when you are</strong><small id="output-detail">A tiny book, a real possibility.</small></div></div><div class="print-actions"><button class="btn" data-action="print" id="print-btn">${icon("print")} Print</button><button class="btn primary" data-action="export" id="export-btn">${icon("download")} Export PDF</button></div></div>
+    <div class="print-bar"><div class="print-total"><span class="print-icon">${icon("file")}</span><div><strong id="output-total">No sheets</strong><small id="output-detail">Add a PDF to begin.</small></div></div><div class="print-actions"><button class="btn" data-action="print" id="print-btn">${icon("print")} Print</button><button class="btn primary" data-action="export" id="export-btn">${icon("download")} Export PDF</button></div></div>
     <div class="scale-note">${icon("info")} Print at <strong>100% / Actual size</strong>. Turn off page scaling and headers.</div>
   </main>
   <aside class="inspector" id="inspector" aria-label="Book settings"></aside>
@@ -154,11 +154,17 @@ function renderLibrary() {
   $("#book-list").innerHTML = state.books.length
     ? state.books
         .map(
-          (b, i) =>
-            `<div class="book-card ${selected === b.id && inspectorMode === "book" ? "selected" : ""} ${b.hidden ? "excluded" : ""}"><button class="book-select" data-action="select-book" data-id="${esc(b.id)}" aria-pressed="${selected === b.id}"><span class="mini-book" style="--book-color:${esc(b.cover.color)};--book-ink:${esc(b.cover.ink)}"><span>${esc(b.title)}</span></span><span class="book-card-text"><strong>${esc(b.title)}</strong><small>${b.pageCount} source pages</small><span class="book-size">${displayNumber(b.width)} x ${displayNumber(b.height)} mm</span></span></button><div class="book-card-bottom"><label><input type="checkbox" data-include-book="${esc(b.id)}" ${!b.hidden ? "checked" : ""}> Include in print</label><span>${String(i + 1).padStart(2, "0")}</span></div></div>`,
+          (
+            b,
+          ) => `<article class="book-card ${selected === b.id && inspectorMode === "book" ? "selected" : ""} ${b.hidden ? "excluded" : ""}" data-book-card="${esc(b.id)}">
+      <div class="book-card-top"><button class="book-select" data-action="select-book" data-id="${esc(b.id)}" aria-label="Edit ${esc(b.title)}" aria-pressed="${selected === b.id}"><span class="mini-book" style="--book-color:${esc(b.cover.color)};--book-ink:${esc(b.cover.ink)}"><span>${esc(b.title)}</span></span></button>
+      <div class="book-card-text"><input class="book-title-input" type="text" maxlength="160" data-book-title="${esc(b.id)}" aria-label="Book title" value="${esc(b.title)}"><small class="book-source" title="${esc(state.assets[b.assetId]?.name)}">${esc(state.assets[b.assetId]?.name)}</small><small>${b.pageCount} pages / ${displayNumber(b.width)} x ${displayNumber(b.height)} mm</small></div></div>
+      <div class="book-card-actions"><label><input type="checkbox" data-include-book="${esc(b.id)}" ${!b.hidden ? "checked" : ""}> Include in print</label><span><button class="icon-btn" data-action="duplicate-book" data-id="${esc(b.id)}" aria-label="Duplicate ${esc(b.title)}" title="Duplicate book">${icon("copy")}</button><button class="icon-btn danger" data-action="delete-book" data-id="${esc(b.id)}" aria-label="Remove ${esc(b.title)}" title="Remove book">${icon("trash")}</button></span></div>
+      <div class="book-card-bottom"><label><input type="checkbox" data-book-part="pages" data-book-id="${esc(b.id)}" aria-label="Pages for ${esc(b.title)}" ${b.includePages ? "checked" : ""}> Pages</label><label><input type="checkbox" data-book-part="cover" data-book-id="${esc(b.id)}" aria-label="Cover for ${esc(b.title)}" ${b.cover.enabled ? "checked" : ""}> Cover</label></div>
+    </article>`,
         )
         .join("")
-    : `<div class="empty-library">Your book collection<br>is waiting to begin.</div>`;
+    : `<div class="empty-library">No books added.</div>`;
 }
 function renderInspector() {
   const el = $("#inspector"),
@@ -169,21 +175,33 @@ function renderInspector() {
     return;
   }
   if (!book) {
-    el.innerHTML = `<div class="inspector-empty">${icon("settings")}<h3>Make it your own</h3><p>Add or select a book to adjust its pages, cover, and cutting guides.</p><button class="btn" data-action="sheet-setup">Sheet setup</button></div>`;
+    el.innerHTML = `<div class="inspector-empty">${icon("settings")}<h3>Book settings</h3><p>Add or select a book to adjust its pages, cover, and cutting guides.</p><button class="btn" data-action="sheet-setup">Sheet setup</button></div>`;
     return;
   }
-  el.innerHTML = `<div class="inspector-head"><span class="eyebrow">BOOK DETAILS</span><div class="inspector-title"><h2>${esc(book.title)}</h2><div><button class="icon-btn" data-action="duplicate-book" aria-label="Duplicate selected book" title="Duplicate book">${icon("copy")}</button><button class="icon-btn danger" data-action="delete-book" aria-label="Remove selected book" title="Remove book">${icon("trash")}</button></div></div><div class="source-file">${icon("file")}<span>${esc(state.assets[book.assetId]?.name)}</span></div></div><div class="inspector-tabs" role="tablist" aria-label="Book settings">${[
+  const tabDisabled = (tab) =>
+    tab === "pages"
+      ? !book.includePages
+      : tab === "cover"
+        ? !book.cover.enabled
+        : false;
+  if (tabDisabled(inspectorTab))
+    inspectorTab = book.includePages
+      ? "pages"
+      : book.cover.enabled
+        ? "cover"
+        : "cutting";
+  el.innerHTML = `<div class="inspector-tabs" role="tablist" aria-label="Book settings">${[
     ["pages", "Pages"],
     ["cover", "Cover"],
     ["cutting", "Cutting"],
   ]
     .map(
-      ([tab, text]) =>
-        `<button role="tab" aria-selected="${inspectorTab === tab}" data-action="inspector-tab" data-tab="${tab}" class="${inspectorTab === tab ? "active" : ""}">${text}</button>`,
+      ([tab, label]) =>
+        `<button role="tab" aria-selected="${inspectorTab === tab}" ${tabDisabled(tab) ? "disabled" : ""} data-action="inspector-tab" data-tab="${tab}" class="${inspectorTab === tab ? "active" : ""}">${label}</button>`,
     )
     .join(
       "",
-    )}</div><div class="inspector-content" role="tabpanel">${inspectorTab === "pages" ? pagesPanel(book) : inspectorTab === "cover" ? coverPanel(book) : cuttingPanel(book)}</div><div class="inspector-bottom">${icon("moon")} A little patience. A lovely little book.</div>`;
+    )}</div><div class="inspector-content" role="tabpanel">${inspectorTab === "pages" ? pagesPanel(book) : inspectorTab === "cover" ? coverPanel(book) : cuttingPanel(book)}</div>`;
   syncSizingControls();
 }
 const displayNumber = (value) => Number(value.toFixed(2));
@@ -211,7 +229,7 @@ function proportionControls(book) {
     proportionSummary(book) +
     toggle(
       "Link width & height",
-      "Keep the artwork in its PDF proportions.",
+      "Keep PDF proportions.",
       "lockAspectRatio",
       book.lockAspectRatio,
     )
@@ -222,7 +240,7 @@ function scaleControl(book) {
   if (!source) return "";
   const limits = scaleLimits(book, source),
     scale = displayNumber(pdfScale(book, source));
-  return `${numberField("PDF scale", "pdfScale", scale, 0.1, 10000, 0.5, "book", "%")}<input class="scale-slider" type="range" min="${limits.min}" max="${limits.max}" step="any" value="${scale}" data-target="book" data-key="pdfScale" aria-label="PDF scale slider"><p class="field-help scale-help">Resize both sides together as a percentage of PDF page ${source.page}. Matching the PDF avoids extra space from a different page shape.</p>`;
+  return `${numberField("PDF scale", "pdfScale", scale, 0.1, 10000, 0.5, "book", "%")}<input class="scale-slider" type="range" min="${limits.min}" max="${limits.max}" step="any" value="${scale}" data-target="book" data-key="pdfScale" aria-label="PDF scale slider"><p class="field-help scale-help">Scale relative to PDF page ${source.page}.</p>`;
 }
 function syncNumberPickers() {
   document.querySelectorAll(".number-wrap").forEach((picker) => {
@@ -290,17 +308,16 @@ function syncSizingControls(skip = null) {
   const preset = $('select[data-key="sizePreset"]');
   if (preset) {
     preset.value = pagePresetValue(book);
-    const names = ["Extra tiny", "Classic mini", "Little pocket", "Pocket"];
     [...preset.options].slice(0, 4).forEach((option, i) => {
       const [width, height] = option.value.split("x");
-      option.textContent = `${names[i]} - ${width}${book.lockAspectRatio ? " mm wide" : ` x ${height} mm`}`;
+      option.textContent = `${width}${book.lockAspectRatio ? " mm wide" : ` x ${height} mm`}`;
     });
   }
   const summary = $(".proportion-reference");
   if (summary) summary.outerHTML = proportionSummary(book);
   const scaleHelp = $(".scale-help");
   if (scaleHelp && source)
-    scaleHelp.textContent = `Resize both sides together as a percentage of PDF page ${source.page}. Matching the PDF avoids extra space from a different page shape.`;
+    scaleHelp.textContent = `Scale relative to PDF page ${source.page}.`;
   syncNumberPickers();
 }
 function applySizing(key, value, rebuild = false, skip = null) {
@@ -327,47 +344,29 @@ function nudgeNumber(input, direction) {
 function pagesPanel(b) {
   return (
     section(
-      "The little details",
-      `<label class="field"><span>Book title</span><input type="text" data-key="title" data-target="book" value="${esc(b.title)}" maxlength="160"></label>${selectField(
-        "Page size",
+      "Dimensions",
+      `${selectField(
+        "Preset",
         "sizePreset",
         pagePresetValue(b),
         [
-          [
-            "20x28",
-            b.lockAspectRatio
-              ? "Extra tiny - 20 mm wide"
-              : "Extra tiny - 20 x 28 mm",
-          ],
-          [
-            "25x35",
-            b.lockAspectRatio
-              ? "Classic mini - 25 mm wide"
-              : "Classic mini - 25 x 35 mm",
-          ],
-          [
-            "30x42",
-            b.lockAspectRatio
-              ? "Little pocket - 30 mm wide"
-              : "Little pocket - 30 x 42 mm",
-          ],
-          [
-            "40x56",
-            b.lockAspectRatio ? "Pocket - 40 mm wide" : "Pocket - 40 x 56 mm",
-          ],
+          ["20x28", b.lockAspectRatio ? "20 mm wide" : "20 x 28 mm"],
+          ["25x35", b.lockAspectRatio ? "25 mm wide" : "25 x 35 mm"],
+          ["30x42", b.lockAspectRatio ? "30 mm wide" : "30 x 42 mm"],
+          ["40x56", b.lockAspectRatio ? "40 mm wide" : "40 x 56 mm"],
           ["custom", "Custom dimensions"],
         ],
         "book",
         true,
-      )}${proportionControls(b)}<div class="field-pair">${numberField("Width", "width", b.width, 5, 300)}${numberField("Height", "height", b.height, 5, 400)}</div>${scaleControl(b)}${numberField("Content margin", "margin", b.margin, 0, 30, 0.1)}<p class="field-help">White space inside each cut page. Set this to 0 for no added margin. The PDF's own margins remain.</p>`,
+      )}${proportionControls(b)}<div class="field-pair">${numberField("Width", "width", b.width, 5, 300)}${numberField("Height", "height", b.height, 5, 400)}</div>${scaleControl(b)}${numberField("Content margin", "margin", b.margin, 0, 30, 0.1)}<p class="field-help">0 adds no padding. Margins in the PDF remain.</p>`,
     ) +
     section(
-      "What goes inside",
-      `${toggle("Include book pages", "Turn off for a cover-only book.", "includePages", b.includePages)}${b.includePages ? `<label class="field"><span>PDF page ranges <small>${b.pageCount} available</small></span><input type="text" data-key="ranges" data-target="book" value="${esc(b.ranges)}" placeholder="All pages, or 1-8, 12, 15-20" aria-describedby="range-help"></label><p class="field-help" id="range-help">PDF page numbers, starting at 1. Blank means all pages. Pairs follow your selected order.</p><div class="info-pill">${icon("file")} ${selectionLabel(b)}</div>` : `<div class="tip-card">Just the cover. Perfect for a decorative miniature.</div>`}`,
+      "Page range",
+      `${b.includePages ? `<label class="field"><span>PDF page ranges <small>${b.pageCount} available</small></span><input type="text" data-key="ranges" data-target="book" value="${esc(b.ranges)}" placeholder="All pages, or 1-8, 12, 15-20" aria-describedby="range-help"></label><p class="field-help" id="range-help">Leave blank for all pages. Use PDF page numbers.</p><div class="info-pill">${icon("file")} ${selectionLabel(b)}</div>` : `<div class="tip-card">Just the cover. Perfect for a decorative miniature.</div>`}`,
     ) +
     section(
-      "Room to cut & fold",
-      `${numberField("Space between rows", "rowGap", b.rowGap, 0, 50, 0.5)}${state.settings.mode === "duplex" ? numberField("Space between pages", "columnGap", b.columnGap, 0, 50, 0.5) : `<div class="tip-card">${icon("scissors")}<p>Pages touch side by side, so you can cut continuous strips and fold or glue them. Row spacing gives your scissors room.</p></div>`}`,
+      "Spacing",
+      `${numberField("Space between rows", "rowGap", b.rowGap, 0, 50, 0.5)}${state.settings.mode === "duplex" ? numberField("Space between pages", "columnGap", b.columnGap, 0, 50, 0.5) : `<div class="tip-card">${icon("scissors")}<p>Single-sided pages touch side by side.</p></div>`}`,
     ) +
     section(
       "Reading order",
@@ -396,9 +395,15 @@ function coverPanel(b) {
   const c = b.cover,
     cw = b.width + c.overhang * 2;
   return (
+    (!b.includePages
+      ? section(
+          "Cover size",
+          `${proportionControls(b)}<div class="field-pair">${numberField("Width", "width", b.width, 5, 300)}${numberField("Height", "height", b.height, 5, 400)}</div>`,
+        )
+      : "") +
     section(
-      "Dress your book",
-      `${toggle("Include cover", "A flat wrap: back + spine + front.", "cover.enabled", c.enabled)}${
+      "Cover",
+      `${
         c.enabled
           ? `<div class="cover-schematic"><div style="background:${esc(c.color)};color:${esc(c.ink)}"><span>BACK</span><i></i><span>FRONT</span></div><small>${(cw * 2 + c.spine).toFixed(1)} x ${(b.height + c.overhang * 2).toFixed(1)} mm unfolded</small></div>${selectField(
               "Cover artwork",
@@ -411,7 +416,7 @@ function coverPanel(b) {
               ],
               "book",
               true,
-            )}<div class="field-pair">${numberField("Spine width", "cover.spine", c.spine, 0, 30, 0.1)}${numberField("Overhang", "cover.overhang", c.overhang, 0, 10, 0.1)}</div><p class="field-help">Overhang adds to every edge of each front/back panel. Set spine width to suit your paper stack.</p>`
+            )}<div class="field-pair">${numberField("Spine width", "cover.spine", c.spine, 0, 30, 0.1)}${numberField("Overhang", "cover.overhang", c.overhang, 0, 10, 0.1)}</div><p class="field-help">Overhang adds to each edge of the front and back covers.</p>`
           : ""
       }`,
     ) +
@@ -428,10 +433,19 @@ function coverPanel(b) {
               )
             : "") +
         section(
-          c.mode === "generated"
-            ? "The cover palette"
-            : "Generated piece palette",
-          `<div class="field-pair"><label class="field"><span>Cover color</span><div class="color-field"><input type="color" data-key="cover.color" data-target="book" value="${esc(c.color)}"><span>${esc(c.color)}</span></div></label><label class="field"><span>Lettering</span><div class="color-field"><input type="color" data-key="cover.ink" data-target="book" value="${esc(c.ink)}"><span>${esc(c.ink)}</span></div></label></div><div class="swatches">${["#354c45", "#5146b9", "#87464f", "#263951", "#b07335", "#342e3a"].map((col) => `<button class="swatch ${c.color === col ? "active" : ""}" style="--swatch:${col}" data-action="cover-color" data-color="${col}" aria-label="Use cover color ${col}"></button>`).join("")}</div><label class="field"><span>Edition line</span><input type="text" maxlength="48" data-key="cover.subtitle" data-target="book" value="${esc(c.subtitle)}"></label><label class="field"><span>Back cover text</span><textarea aria-label="Back cover text" rows="4" maxlength="500" data-key="cover.backText" data-target="book">${esc(c.backText)}</textarea></label><p class="field-help">For the generated back cover. Line breaks are kept; leave blank for no text. Uploaded back or full-wrap artwork keeps its own text.</p>${toggle("Soft gradient", "A little depth on generated pieces.", "cover.gradient", c.gradient, "book", false)}<p class="field-help">Unspecified pieces use this design. The title comes from the Pages tab.</p>`,
+          c.mode === "generated" ? "Design" : "Generated design",
+          `<div class="field-pair"><label class="field"><span>Cover color</span><div class="color-field"><input type="color" data-key="cover.color" data-target="book" value="${esc(c.color)}"><span>${esc(c.color)}</span></div></label><label class="field"><span>Lettering</span><div class="color-field"><input type="color" data-key="cover.ink" data-target="book" value="${esc(c.ink)}"><span>${esc(c.ink)}</span></div></label></div><div class="swatches">${["#354c45", "#5146b9", "#87464f", "#263951", "#b07335", "#342e3a"].map((col) => `<button class="swatch ${c.color === col ? "active" : ""}" style="--swatch:${col}" data-action="cover-color" data-color="${col}" aria-label="Use cover color ${col}"></button>`).join("")}</div>${selectField(
+            "Spine text",
+            "cover.spineMode",
+            c.spineMode,
+            [
+              ["title", "Book title"],
+              ["custom", "Custom text"],
+              ["none", "No text"],
+            ],
+            "book",
+            true,
+          )}${c.spineMode === "custom" ? `<label class="field"><span>Custom spine text</span><input type="text" maxlength="160" data-key="cover.spineText" data-target="book" value="${esc(c.spineText)}"></label>` : ""}<label class="field"><span>Back cover text</span><textarea aria-label="Back cover text" rows="4" maxlength="500" data-key="cover.backText" data-target="book">${esc(c.backText)}</textarea></label><p class="field-help">Generated back only. Leave blank for no text.</p>${toggle("Soft gradient", "", "cover.gradient", c.gradient, "book", false)}<p class="field-help">Text and colors apply to generated pieces only.</p>`,
         )
       : "")
   );
@@ -439,7 +453,7 @@ function coverPanel(b) {
 function cuttingPanel(b) {
   return (
     section(
-      "Tiny guides, tidy cuts",
+      "Cutting guides",
       `${selectField(
         "Cut marks",
         "marks",
@@ -489,8 +503,8 @@ function cuttingPanel(b) {
 function renderSheetInspector() {
   const s = state.settings;
   $("#inspector").innerHTML =
-    `<div class="inspector-head"><span class="eyebrow">THE BIGGER PICTURE</span><div class="inspector-title"><h2>Sheet setup</h2><button class="icon-btn" data-action="back-to-book" aria-label="Back to book details">${icon("close")}</button></div><p class="section-caption">One paper size for the whole project.</p></div><div class="inspector-content">${section(
-      "Your paper",
+    `<div class="inspector-head"><div class="inspector-title"><h2>Sheet setup</h2><button class="icon-btn" data-action="back-to-book" aria-label="Back to book details">${icon("close")}</button></div></div><div class="inspector-content">${section(
+      "Paper",
       `${selectField(
         "Paper size",
         "paper",
@@ -507,7 +521,7 @@ function renderSheetInspector() {
         true,
       )}${s.paper === "Custom" ? `<div class="field-pair">${numberField("Width", "customWidth", s.customWidth, 40, 1200, 1, "settings")}${numberField("Height", "customHeight", s.customHeight, 40, 1200, 1, "settings")}</div>` : ""}<div class="segmented" role="group" aria-label="Paper orientation">${["portrait", "landscape"].map((v) => `<button data-action="orientation" data-value="${v}" class="${s.orientation === v ? "active" : ""}"><span class="orientation-icon ${v}"></span>${v[0].toUpperCase() + v.slice(1)}</button>`).join("")}</div>${numberField("Safe sheet margin", "sheetMargin", s.sheetMargin, 0, 100, 0.5, "settings")}`,
     )}${section(
-      "One side or two?",
+      "Print mode",
       `<div class="mode-choices">${[
         ["single", "Single-sided", "Continuous rows. Glue blank backs."],
         ["duplex", "Double-sided", "Paired leaves. Print front and back."],
@@ -543,7 +557,7 @@ function renderSheetInspector() {
             `<p class="field-help">For manual duplex, test your tray's reinsertion order with one sheet first. Blank cover backs are kept.</p>`
           : ""
       }`,
-    )}${s.mode === "duplex" ? section("Fine-tune the reverse", `<div class="field-pair">${numberField("Back shift X", "backOffsetX", s.backOffsetX, -20, 20, 0.1, "settings")}${numberField("Back shift Y", "backOffsetY", s.backOffsetY, -20, 20, 0.1, "settings")}</div><p class="field-help">Positive X moves right; positive Y moves down, as viewed on the back sheet. These compensate for printer alignment.</p>`) : ""}${section("Before the good paper", `${toggle("Registration crosses", "Small crosses 5 mm from sheet corners.", "registration", s.registration, "settings", false)}<button class="btn full" data-action="calibration">${icon("download")} Calibration PDF</button><p class="field-help">Includes a 20 mm square and a ruler. Duplex calibration includes a matching back.</p>`)}</div>`;
+    )}${s.mode === "duplex" ? section("Back alignment", `<div class="field-pair">${numberField("Back shift X", "backOffsetX", s.backOffsetX, -20, 20, 0.1, "settings")}${numberField("Back shift Y", "backOffsetY", s.backOffsetY, -20, 20, 0.1, "settings")}</div><p class="field-help">Positive X moves right; positive Y moves down, as viewed on the back sheet. These compensate for printer alignment.</p>`) : ""}${section("Calibration", `${toggle("Registration crosses", "Small crosses 5 mm from sheet corners.", "registration", s.registration, "settings", false)}<button class="btn full" data-action="calibration">${icon("download")} Calibration PDF</button><p class="field-help">Includes a 20 mm square and a ruler. Duplex calibration includes a matching back.</p>`)}</div>`;
 }
 function activeProject() {
   const ids = new Set(state.books.map((b) => b.assetId));
@@ -594,11 +608,11 @@ function persist() {
     }
   }, 550);
 }
-function changed({ form = false } = {}) {
+function changed({ form = false, library = true } = {}) {
   revision++;
   livePreview.cancel();
   persist();
-  renderLibrary();
+  if (library) renderLibrary();
   if (form) renderInspector();
   refreshLayout();
   cancelAnimationFrame(previewTimer);
@@ -630,8 +644,8 @@ function refreshLayout() {
     );
   const output = outputFaces(layout, s);
   $("#output-total").textContent = layout.sheets.length
-    ? `${layout.sheets.length} sheet${layout.sheets.length === 1 ? "" : "s"}, ${pieces} little piece${pieces === 1 ? "" : "s"}`
-    : "Ready when you are";
+    ? `${layout.sheets.length} sheet${layout.sheets.length === 1 ? "" : "s"}, ${pieces} piece${pieces === 1 ? "" : "s"}`
+    : "No sheets";
   $("#output-detail").textContent = layout.sheets.length
     ? `${enabled.length} book${enabled.length === 1 ? "" : "s"} / ${output.length} printed side${output.length === 1 ? "" : "s"}${duplex && s.output !== "all" ? ` / ${s.output}s only` : ""}`
     : "Add a PDF or try a sample to begin.";
@@ -655,7 +669,7 @@ function updateFaceLabels() {
     : "No sheets yet";
   $("#preview-info").textContent = face
     ? `${face.pieces.length} piece${face.pieces.length === 1 ? "" : "s"} on this side`
-    : "Your layout will appear here";
+    : "No preview";
   $('[data-action="prev-face"]').disabled = !face || faceIndex === 0;
   $('[data-action="next-face"]').disabled =
     !face || faceIndex >= layout.faces.length - 1;
@@ -755,6 +769,56 @@ function editBook(key, value, rebuild = false, id = selected) {
   changed({ form: rebuild });
 }
 function handleField(field, isInput = false) {
+  if (field.dataset.bookTitle) {
+    const id = field.dataset.bookTitle;
+    if (selected !== id || inspectorMode !== "book") {
+      selected = id;
+      inspectorMode = "book";
+      renderInspector();
+      document.querySelectorAll("[data-book-card]").forEach((card) => {
+        card.classList.toggle("selected", card.dataset.bookCard === id);
+        card
+          .querySelector(".book-select")
+          .setAttribute("aria-pressed", String(card.dataset.bookCard === id));
+      });
+    }
+    state.books = state.books.map((b) =>
+      b.id === id ? { ...b, title: field.value.trim() || "Untitled book" } : b,
+    );
+    const book = state.books.find((b) => b.id === id),
+      card = field.closest(".book-card");
+    card.querySelector(".mini-book > span").textContent = book.title;
+    card
+      .querySelector('[data-book-part="pages"]')
+      .setAttribute("aria-label", `Pages for ${book.title}`);
+    card
+      .querySelector('[data-book-part="cover"]')
+      .setAttribute("aria-label", `Cover for ${book.title}`);
+    card
+      .querySelector('[data-action="duplicate-book"]')
+      .setAttribute("aria-label", `Duplicate ${book.title}`);
+    card
+      .querySelector('[data-action="delete-book"]')
+      .setAttribute("aria-label", `Remove ${book.title}`);
+    card
+      .querySelector(".book-select")
+      .setAttribute("aria-label", `Edit ${book.title}`);
+    if (!isInput) field.value = book.title;
+    changed({ library: false });
+    return;
+  }
+  if (field.dataset.bookPart) {
+    selected = field.dataset.bookId;
+    inspectorMode = "book";
+    editBook(
+      field.dataset.bookPart === "pages" ? "includePages" : "cover.enabled",
+      field.checked,
+      true,
+      selected,
+    );
+    return;
+  }
+
   if (field.dataset.includeBook) {
     editBook("hidden", !field.checked, false, field.dataset.includeBook);
     return;
@@ -813,8 +877,6 @@ function handleField(field, isInput = false) {
   } else {
     if (key === "title") value = value.trim() || "Untitled book";
     editBook(key, value, field.hasAttribute("data-rebuild"));
-    if (key === "title" && inspectorMode === "book")
-      $(".inspector-title h2").textContent = value;
     if (key === "cover.color" || key === "cover.ink") {
       const label = field.parentElement.querySelector("span");
       if (label) label.textContent = value;
@@ -844,7 +906,7 @@ app.addEventListener("input", (event) => {
     ["text", "textarea", "number", "color", "range"].includes(
       event.target.type,
     ) &&
-    event.target.dataset.key
+    (event.target.dataset.key || event.target.dataset.bookTitle)
   ) {
     handleField(event.target, true);
     syncNumberPickers();
@@ -936,9 +998,7 @@ async function addBooks(files) {
     inspectorTab = "pages";
     changed({ form: true });
     if (added === files.length)
-      toast(
-        `${added} book${added === 1 ? "" : "s"} added. Time to make something small.`,
-      );
+      toast(`${added} book${added === 1 ? "" : "s"} added. `);
   } else
     setSaveStatus(
       storageOkay ? "Saved on this device" : "Local save unavailable",
@@ -986,7 +1046,7 @@ $("#project-input").addEventListener("change", async (event) => {
     faceIndex = 0;
     zoom = 1;
     changed({ form: true });
-    toast("Project opened. Welcome back to your workbench.");
+    toast("Project opened.");
   } catch (error) {
     toast(`Could not open this project. ${error.message}`, true);
   }
@@ -1122,7 +1182,7 @@ function openModal(html, wide = false) {
 }
 function showHelp() {
   openModal(
-    `<h2>Make a little something.</h2><p class="modal-intro">From an ordinary PDF to a book that fits in your palm.</p><div class="guide-steps"><article><span>${icon("upload")}</span><div><h3>Bring a book</h3><p>Add one or more PDFs. Set each book's finished page size, content margin, and page ranges. Turn off pages for a cover-only miniature.</p></div></article><article><span>${icon("book")}</span><div><h3>Give it a cover</h3><p>Generate a cover, upload a full wrap, or choose front, spine, and back separately. Any piece can use a page from your book or another PDF. Missing pieces get a matching design.</p></div></article><article><span>${icon("print")}</span><div><h3>Choose your paper</h3><p>In Sheet setup, choose your paper, orientation, and print mode. Single-sided layouts make continuous rows. Double-sided layouts put page pairs in the same physical position after flipping.</p></div></article><article><span>${icon("scissors")}</span><div><h3>Print, cut, make</h3><p>Start with the calibration PDF. Print at 100% / Actual size with headers off. Cut using the tiny guides. For single-sided books, glue blank backs together. For double-sided books, cut leaves and stack them in reading order. Fold the cover around your stack.</p></div></article></div><div class="guide-note"><strong>A note on duplex printing</strong><p>Match the flip edge in the app and printer. Real printers can drift, so check one sheet first. The back offsets compensate for consistent alignment errors. Fronts and backs can also be exported separately for manual duplex.</p></div><div class="guide-note"><strong>Your private little workbench</strong><p>Everything runs in your browser. PDFs, images, and settings are automatically saved on this device when browser storage is available. Save project downloads a portable backup with your files included. Clearing browser data removes local saves.</p></div><p class="field-help">Tip: click a piece in the preview to edit its book. Use Ctrl/Cmd + S to save your project.</p>`,
+    `<h2>How to use Bookche</h2><p class="modal-intro"></p><div class="guide-steps"><article><span>${icon("upload")}</span><div><h3>Add a PDF</h3><p>Add one or more PDFs. Set each book's finished page size, content margin, and page ranges. Turn off pages for a cover-only miniature.</p></div></article><article><span>${icon("book")}</span><div><h3>Set up the cover</h3><p>Generate a cover, upload a full wrap, or choose front, spine, and back separately. Any piece can use a page from your book or another PDF. Missing pieces get a matching design.</p></div></article><article><span>${icon("print")}</span><div><h3>Choose your paper</h3><p>In Sheet setup, choose your paper, orientation, and print mode. Single-sided layouts make continuous rows. Double-sided layouts put page pairs in the same physical position after flipping.</p></div></article><article><span>${icon("scissors")}</span><div><h3>Print and assemble</h3><p>Start with the calibration PDF. Print at 100% / Actual size with headers off. Cut using the tiny guides. For single-sided books, glue blank backs together. For double-sided books, cut leaves and stack them in reading order. Fold the cover around your stack.</p></div></article></div><div class="guide-note"><strong>A note on duplex printing</strong><p>Match the flip edge in the app and printer. Real printers can drift, so check one sheet first. The back offsets compensate for consistent alignment errors. Fronts and backs can also be exported separately for manual duplex.</p></div><div class="guide-note"><strong>Storage and privacy</strong><p>Everything runs in your browser. PDFs, images, and settings are automatically saved on this device when browser storage is available. Save project downloads a portable backup with your files included. Clearing browser data removes local saves.</p></div><p class="field-help">Tip: click a piece in the preview to edit its book. Use Ctrl/Cmd + S to save your project.</p>`,
   );
 }
 function showAllSheets() {
@@ -1131,7 +1191,7 @@ function showAllSheets() {
     return;
   }
   openModal(
-    `<h2>Every little sheet.</h2><p class="modal-intro">${layout.sheets.length} paper sheet${layout.sheets.length === 1 ? "" : "s"} / ${layout.faces.length} sides in the layout. Click a side to preview it.</p><div class="sheet-grid">${layout.faces.map((face, i) => `<button class="sheet-thumbnail ${i === faceIndex ? "active" : ""}" data-action="jump-face" data-index="${i}"><span class="thumbnail-paper" style="aspect-ratio:${layout.width}/${layout.height}">${face.pieces.map((p) => `<i style="left:${(p.x / layout.width) * 100}%;top:${(p.y / layout.height) * 100}%;width:${(p.width / layout.width) * 100}%;height:${(p.height / layout.height) * 100}%;background:${p.kind === "cover" ? esc(state.books.find((b) => b.id === p.bookId).cover.color) : "#e8e5f5"}"></i>`).join("")}</span><strong>Sheet ${face.sheet + 1}${state.settings.mode === "duplex" ? ` / ${face.side}` : ""}</strong><small>${face.pieces.length ? `${face.pieces.length} pieces` : "Blank reverse - kept for alignment"}</small></button>`).join("")}</div>`,
+    `<h2>All sheets</h2><p class="modal-intro">${layout.sheets.length} paper sheet${layout.sheets.length === 1 ? "" : "s"} / ${layout.faces.length} sides in the layout. Click a side to preview it.</p><div class="sheet-grid">${layout.faces.map((face, i) => `<button class="sheet-thumbnail ${i === faceIndex ? "active" : ""}" data-action="jump-face" data-index="${i}"><span class="thumbnail-paper" style="aspect-ratio:${layout.width}/${layout.height}">${face.pieces.map((p) => `<i style="left:${(p.x / layout.width) * 100}%;top:${(p.y / layout.height) * 100}%;width:${(p.width / layout.width) * 100}%;height:${(p.height / layout.height) * 100}%;background:${p.kind === "cover" ? esc(state.books.find((b) => b.id === p.bookId).cover.color) : "#e8e5f5"}"></i>`).join("")}</span><strong>Sheet ${face.sheet + 1}${state.settings.mode === "duplex" ? ` / ${face.side}` : ""}</strong><small>${face.pieces.length ? `${face.pieces.length} pieces` : "Blank reverse - kept for alignment"}</small></button>`).join("")}</div>`,
     true,
   );
 }
@@ -1263,7 +1323,7 @@ app.addEventListener("click", async (event) => {
         bytes,
         `bookche-${state.settings.paper.toLowerCase()}-${state.settings.mode}${state.settings.mode === "duplex" && state.settings.output !== "all" ? `-${state.settings.output}s` : ""}.pdf`,
       );
-      toast("Your little books are ready. Print at 100% / Actual size.");
+      toast("PDF exported. Print at 100% / Actual size.");
     });
     return;
   }
@@ -1298,12 +1358,12 @@ app.addEventListener("click", async (event) => {
       inspectorMode = "book";
       inspectorTab = "pages";
       changed({ form: true });
-      toast("A little sample book, ready to explore.");
+      toast("Sample added.");
     });
     return;
   }
   if (action === "duplicate-book") {
-    const b = bookNow();
+    const b = state.books.find((b) => b.id === button.dataset.id);
     if (!b) return;
     const copy = {
       ...structuredClone(b),
@@ -1312,16 +1372,17 @@ app.addEventListener("click", async (event) => {
     };
     state.books = [...state.books, copy];
     selected = copy.id;
+    inspectorMode = "book";
     changed({ form: true });
     toast("Book duplicated.");
     return;
   }
   if (action === "delete-book") {
-    const b = bookNow();
+    const b = state.books.find((b) => b.id === button.dataset.id);
     if (!b) return;
     undoRemove = { book: b, index: state.books.indexOf(b) };
     state.books = state.books.filter((item) => item.id !== b.id);
-    selected = state.books[0]?.id;
+    if (selected === b.id) selected = state.books[0]?.id;
     changed({ form: true });
     toast(`Removed ${b.title}.`, false, true);
     return;

@@ -18,9 +18,9 @@ export function makeCoverLettering(
   height,
   ink,
   role,
-  subtitle = "",
   scale = 12,
   backText = DEFAULT_BACK_TEXT,
+  spineText = text,
 ) {
   // Browser fonts preserve non-Latin book titles as well as Latin text.
   const canvas = document.createElement("canvas");
@@ -43,13 +43,11 @@ export function makeCoverLettering(
         width * 0.78,
       );
     });
-    ctx.font = `${width * 0.043}px system-ui, sans-serif`;
-    ctx.fillText(subtitle, width / 2, height * 0.84, width * 0.82);
   } else if (role === "spine") {
     ctx.translate(width / 2, height / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.font = `${Math.min(width * 0.5, 2)}px Georgia, serif`;
-    ctx.fillText(text, 0, 0, height * 0.83);
+    ctx.fillText(spineText, 0, 0, height * 0.83);
   } else {
     let size = Math.min(width * 0.065, height * 0.055),
       lines = [];
@@ -82,4 +80,12 @@ export function makeCoverLettering(
     );
   }
   return canvas;
+}
+
+export function spineTextFor(book) {
+  return book.cover.spineMode === "none"
+    ? ""
+    : book.cover.spineMode === "custom"
+      ? book.cover.spineText
+      : book.title;
 }

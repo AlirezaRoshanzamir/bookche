@@ -90,3 +90,5 @@ Built with Vite, pdf-lib, and PDF.js. DM Sans and Instrument Serif are bundled l
 The size link uses the most common page shape in the selected range, so a differently sized cover does not add white edges to every body page. For existing books, click **Match PDF** to apply the reference. Content margin and row spacing are separate controls. PDFs with mixed shapes still fit within one finished page size, preserving artwork without cropping.
 
 Edit **Cover > Back cover text** to replace the generated back-cover message. Line breaks are preserved and long text wraps to fit; clear the field for a blank back. Uploaded artwork keeps its own lettering.
+
+Book cards contain the editable title, duplicate/remove buttons, and Pages/Cover checkboxes. Unchecked parts have disabled settings tabs. For generated covers, **Spine text** can use the book title, custom text, or no text. Edition lettering is no longer printed.

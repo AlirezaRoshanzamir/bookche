@@ -7,7 +7,7 @@ import {
   cutGuides,
   registrationGuides,
 } from "./render-geometry.js";
-import { makeCoverLettering } from "./cover.js";
+import { makeCoverLettering, spineTextFor } from "./cover.js";
 
 export function createSheetPreview() {
   const ids = new WeakMap(),
@@ -133,7 +133,7 @@ export function createSheetPreview() {
       h,
       c.ink,
       panel.role,
-      c.subtitle,
+      spineTextFor(book),
       c.backText,
       pixelsPerMm,
     ]);
@@ -146,9 +146,9 @@ export function createSheetPreview() {
           h,
           c.ink,
           panel.role,
-          c.subtitle,
           pixelsPerMm,
           c.backText,
+          spineTextFor(book),
         ),
       );
       if (lettering.size > 40) lettering.delete(lettering.keys().next().value);

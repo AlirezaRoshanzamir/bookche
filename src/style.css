@@ -2632,3 +2632,98 @@ input.scale-slider {
   line-height: 1.5;
   padding: 10px 12px;
 }
+
+/* Book-level controls live together in each library card. */
+.book-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+}
+.book-card-top .book-select {
+  width: auto;
+  flex: 0 0 auto;
+  padding: 0;
+}
+.book-card-top .book-card-text {
+  flex: 1;
+  gap: 5px;
+}
+.book-title-input {
+  width: 100%;
+  min-width: 0;
+  padding: 5px 6px;
+  font-size: 14px;
+  font-weight: 600;
+  border-color: transparent;
+  background: transparent;
+}
+.book-title-input:hover,
+.book-title-input:focus {
+  background: white;
+}
+.book-source {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.book-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 0 10px 8px;
+}
+.book-card-actions > label,
+.book-card-bottom label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text);
+}
+.book-card-actions input {
+  width: 14px;
+  height: 14px;
+}
+.book-card-actions > span {
+  display: flex;
+  gap: 2px;
+}
+.book-card-actions .icon-btn {
+  width: 28px;
+  height: 28px;
+  padding: 5px;
+}
+.book-card-bottom {
+  justify-content: flex-start;
+  gap: 22px;
+  padding: 10px 12px;
+}
+.inspector-tabs button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.inspector > .inspector-tabs {
+  margin-top: 10px;
+}
+.library-heading {
+  padding-top: 24px;
+  padding-bottom: 20px;
+}
+.library-footer {
+  padding-top: 18px;
+}
+.studio-heading h2 {
+  font-family: inherit;
+  font-size: 20px;
+  letter-spacing: -0.4px;
+}
+.library-footer > .text-btn {
+  display: block;
+  margin: 10px auto 0;
+}
+.book-card-bottom input {
+  width: 14px;
+  height: 14px;
+}

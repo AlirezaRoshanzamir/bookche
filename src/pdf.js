@@ -2,7 +2,7 @@ import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
 import * as pdfjs from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { mm, outputFaces } from "./layout.js";
-import { makeCoverLettering } from "./cover.js";
+import { makeCoverLettering, spineTextFor } from "./cover.js";
 import {
   fitInside,
   coverPanels,
@@ -114,8 +114,8 @@ async function generatedText(
   height,
   ink,
   role,
-  subtitle = "",
   backText,
+  spineText,
 ) {
   const canvas = makeCoverLettering(
     text,
@@ -123,9 +123,9 @@ async function generatedText(
     height,
     ink,
     role,
-    subtitle,
     12,
     backText,
+    spineText,
   );
   return doc.embedPng(
     await (await fetch(canvas.toDataURL("image/png"))).arrayBuffer(),
@@ -278,8 +278,8 @@ export async function buildPdf(
           h / mm(1),
           c.ink,
           role,
-          c.subtitle,
           c.backText,
+          spineTextFor(book),
         ),
       );
     page.drawImage(textImages.get(key), { x, y, width: w, height: h });

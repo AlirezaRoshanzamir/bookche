@@ -1,3 +1,4 @@
+import { spineTextFor } from "../src/cover.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { makeBook } from "../src/layout.js";
@@ -244,4 +245,36 @@ test("back-cover text survives project saves, keeps blank text, and defaults for
   );
   b.cover.backText = "x".repeat(501);
   assert.equal(normalizeProject(project).books[0].cover.backText.length, 500);
+});
+
+test("generated spine lettering can follow the title, use custom text, or be blank", () => {
+  const b = book();
+  assert.equal(spineTextFor(b), b.title);
+  b.cover.spineMode = "custom";
+  b.cover.spineText = "Volume 2";
+  assert.equal(spineTextFor(b), "Volume 2");
+  b.cover.spineMode = "none";
+  assert.equal(spineTextFor(b), "");
+  const project = {
+    version: 1,
+    books: [b],
+    assets: {
+      asset: {
+        id: "asset",
+        mime: "application/pdf",
+        bytes: new Uint8Array([1]),
+        pageCount: 2,
+        pageSizes: [source, source],
+      },
+    },
+  };
+  b.cover.spineMode = "custom";
+  b.cover.subtitle = "Old edition line";
+  const restored = normalizeProject(JSON.parse(encodeProject(project)), true)
+    .books[0];
+  assert.equal(spineTextFor(restored), "Volume 2");
+  assert.equal("subtitle" in restored.cover, false);
+  delete b.cover.spineMode;
+  delete b.cover.spineText;
+  assert.equal(normalizeProject(project).books[0].cover.spineMode, "title");
 });
