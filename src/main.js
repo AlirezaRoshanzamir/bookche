@@ -519,42 +519,56 @@ function cuttingPanel(b) {
     )
   );
 }
+function sheetChoice(label, key, value, values, rebuild = false) {
+  return `<label class="sheet-value" title="Change ${esc(label.toLowerCase())}"><span>${label}</span><select aria-label="${esc(label)}" data-target="settings" data-key="${key}" ${rebuild ? "data-rebuild" : ""}>${values.map(([id, text]) => option(id, text, value)).join("")}</select></label>`;
+}
+function syncSheetValueWidths() {
+  $("#sheet-setup").querySelectorAll(".sheet-value select").forEach((select) => {
+    select.style.width = `calc(${select.selectedOptions[0].textContent.length}ch + 28px)`;
+  });
+}
 function renderSheetControls() {
   const s = state.settings,
     open = $("#sheet-advanced")?.open || false,
     focusedKey = document.activeElement?.closest("#sheet-setup")
       ? document.activeElement.dataset.key
       : null;
-  $("#sheet-setup").innerHTML = `<div class="sheet-quick-controls">${selectField(
+  $("#sheet-setup").innerHTML = `<div class="sheet-quick-controls"><span class="sheet-control-icon">${icon("file")}</span>${sheetChoice(
     "Paper size", "paper", s.paper,
-    [["A5", "A5"], ["A4", "A4"], ["A3", "A3"], ["Letter", "US Letter"], ["Legal", "US Legal"], ["Custom", "Custom"]],
-    "settings", true,
-  )}${selectField("Orientation", "orientation", s.orientation,
-    [["portrait", "Portrait"], ["landscape", "Landscape"]], "settings",
-  )}${selectField("Print mode", "mode", s.mode,
-    [["single", "Single-sided"], ["duplex", "Double-sided"]], "settings", true,
-  )}${numberField("Sheet margin", "sheetMargin", s.sheetMargin, 0, 100, 0.5, "settings")}</div>
-  ${s.paper === "Custom" || s.mode === "duplex" ? `<div class="sheet-extra-controls">${
-    s.paper === "Custom" ? `<div class="field-pair">${numberField("Sheet width", "customWidth", s.customWidth, 40, 1200, 1, "settings")}${numberField("Sheet height", "customHeight", s.customHeight, 40, 1200, 1, "settings")}</div>` : ""
-  }${s.mode === "duplex" ? `${selectField("Printer flip edge", "flip", s.flip,
-    [["long", "Flip on long edge"], ["short", "Flip on short edge"]], "settings",
-  )}${selectField("Export / print sides", "output", s.output,
-    [["all", "Both sides"], ["front", "Fronts only"], ["back", "Backs only"]], "settings",
-  )}` : ""}</div>` : ""}
+    [["A5", "A5"], ["A4", "A4"], ["A3", "A3"], ["Letter", "US Letter"], ["Legal", "US Legal"], ["Custom", "Custom"]], true,
+  )}<span class="sheet-control-slash" aria-hidden="true">/</span>${sheetChoice(
+    "Orientation", "orientation", s.orientation,
+    [["portrait", "Portrait"], ["landscape", "Landscape"]],
+  )}<span class="summary-divider" aria-hidden="true"></span>${sheetChoice(
+    "Print mode", "mode", s.mode,
+    [["single", "Single-sided"], ["duplex", "Double-sided"]], true,
+  )}<span class="summary-divider" aria-hidden="true"></span><div class="sheet-margin-value" title="Change sheet margin">${numberField("Sheet margin", "sheetMargin", s.sheetMargin, 0, 100, 0.5, "settings", "mm margin")}</div></div>
   <details class="sheet-advanced" id="sheet-advanced" ${open ? "open" : ""}>
-    <summary>Advanced sheet settings</summary>
-    <div class="sheet-advanced-content">${section("Sheet guides",
+    <summary aria-label="More sheet settings" title="More sheet settings">${icon("settings")}<span>More</span></summary>
+    <div class="sheet-advanced-content">
+    ${s.paper === "Custom" ? section("Custom paper", `<div class="field-pair">${numberField("Sheet width", "customWidth", s.customWidth, 40, 1200, 1, "settings")}${numberField("Sheet height", "customHeight", s.customHeight, 40, 1200, 1, "settings")}</div>`) : ""}
+    ${s.mode === "duplex" ? section("Double-sided printing",
+      `${selectField("Printer flip edge", "flip", s.flip, [["long", "Flip on long edge"], ["short", "Flip on short edge"]], "settings")}${selectField("Export / print sides", "output", s.output, [["all", "Both sides"], ["front", "Fronts only"], ["back", "Backs only"]], "settings")}<div class="field-pair">${numberField("Back shift X", "backOffsetX", s.backOffsetX, -20, 20, 0.1, "settings")}${numberField("Back shift Y", "backOffsetY", s.backOffsetY, -20, 20, 0.1, "settings")}</div><p class="field-help">Match the printer's flip edge. Positive X moves right; positive Y moves down on the back. Test one sheet for manual duplex.</p>`,
+    ) : ""}${section("Sheet guides",
       `${toggle("Cutting grid", "Faint dots in empty areas. Included in print/PDF.", "cuttingGrid", s.cuttingGrid, "settings")}${s.cuttingGrid ? numberField("Grid spacing", "gridSpacing", s.gridSpacing, 2, 20, 1, "settings") : ""}${toggle("Registration crosses", "Crosses 5 mm from sheet corners.", "registration", s.registration, "settings", false)}`,
-    )}${s.mode === "duplex" ? section("Back alignment",
-      `<div class="field-pair">${numberField("Back shift X", "backOffsetX", s.backOffsetX, -20, 20, 0.1, "settings")}${numberField("Back shift Y", "backOffsetY", s.backOffsetY, -20, 20, 0.1, "settings")}</div><p class="field-help">Positive X moves right; positive Y moves down on the back. Match the printer's flip edge. For manual duplex, print fronts first, then backs; test your tray's reinsertion order.</p>`,
-    ) : ""}${section("Calibration",
+    )}${section("Calibration",
       `<button class="btn" data-action="calibration">${icon("download")} Calibration PDF</button><p class="field-help">A 20 mm square and a ruler to check size.${s.mode === "duplex" ? " Includes a matching back." : ""}</p>`,
     )}</div>
   </details>`;
+  syncSheetValueWidths();
   syncNumberPickers();
   if (focusedKey)
     $(`[data-target="settings"][data-key="${focusedKey}"]`)?.focus({ preventScroll: true });
 }
+document.addEventListener("click", (event) => {
+  if (!event.target.closest("#sheet-setup") && $("#sheet-advanced")) $("#sheet-advanced").open = false;
+}, true);
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && $("#sheet-advanced")?.open) {
+    $("#sheet-advanced").open = false;
+    $("#sheet-advanced > summary").focus();
+  }
+});
 function activeProject() {
   const ids = new Set(state.books.map((b) => b.assetId));
   state.books.forEach((b) =>
@@ -873,6 +887,11 @@ function handleField(field, isInput = false) {
     if (key === "mode") faceIndex = 0;
     changed({ form: key === "mode" });
     if (field.hasAttribute("data-rebuild")) renderSheetControls();
+    else syncSheetValueWidths();
+    if (key === "paper" && value === "Custom") {
+      $("#sheet-advanced").open = true;
+      $('[data-key="customWidth"]').focus();
+    }
     syncNumberPickers();
   } else if (
     ["width", "height", "margin", "pdfScale", "lockAspectRatio"].includes(key)
