@@ -24,6 +24,7 @@ import {
 import * as pdfjs from "pdfjs-dist";
 import {
   validPageSize,
+  pageReference,
   resizeBook,
   ratioLabel,
   pdfScale,
@@ -187,14 +188,7 @@ function renderInspector() {
 }
 const displayNumber = (value) => Number(value.toFixed(2));
 function bookReference(book) {
-  let page = 1;
-  try {
-    page = parseRanges(book.ranges, book.pageCount)[0] || 1;
-  } catch {
-    /* Use the first PDF page until the range is valid. */
-  }
-  const size = state.assets[book.assetId]?.pageSizes?.[page - 1];
-  return validPageSize(size) ? { ...size, page } : null;
+  return pageReference(book, state.assets[book.assetId]?.pageSizes);
 }
 function pagePresetValue(book) {
   return (
@@ -210,7 +204,7 @@ function pagePresetValue(book) {
 function proportionSummary(book) {
   const source = bookReference(book);
   if (!source) return "";
-  return `<div class="proportion-summary"><span class="ratio-page" style="aspect-ratio:${source.width}/${source.height}">${icon("file")}</span><div><strong>PDF ratio <span>${ratioLabel(source)}</span></strong><small>Page ${source.page} / ${displayNumber(source.width)} x ${displayNumber(source.height)} mm</small></div><button class="text-btn" data-action="match-pdf-size">Match PDF</button></div>`;
+  return `<div class="proportion-reference"><div class="proportion-summary"><span class="ratio-page" style="aspect-ratio:${source.width}/${source.height}">${icon("file")}</span><div><strong>PDF ratio <span>${ratioLabel(source)}</span></strong><small>Page ${source.page} / ${displayNumber(source.width)} x ${displayNumber(source.height)} mm</small></div><button class="text-btn" data-action="match-pdf-size">Match PDF</button></div>${source.mixed ? `<p class="field-help">Mixed PDF page shapes. Page ${source.page} matches ${source.matches} of ${source.total} selected pages. Match PDF fits this common shape; other shapes may keep white edges.</p>` : ""}</div>`;
 }
 function proportionControls(book) {
   return (
@@ -302,7 +296,7 @@ function syncSizingControls(skip = null) {
       option.textContent = `${names[i]} - ${width}${book.lockAspectRatio ? " mm wide" : ` x ${height} mm`}`;
     });
   }
-  const summary = $(".proportion-summary");
+  const summary = $(".proportion-reference");
   if (summary) summary.outerHTML = proportionSummary(book);
   const scaleHelp = $(".scale-help");
   if (scaleHelp && source)

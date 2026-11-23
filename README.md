@@ -86,3 +86,5 @@ Use a recent Chrome, Edge, Firefox, or Safari. If your browser does not support 
 - `tests/sizing.test.js`: linked dimensions, percentage scales, margins, rotation, and number-picker limits.
 
 Built with Vite, pdf-lib, and PDF.js. DM Sans and Instrument Serif are bundled locally. Third-party license notices are included in `public/licenses/`.
+
+The size link uses the most common page shape in the selected range, so a differently sized cover does not add white edges to every body page. For existing books, click **Match PDF** to apply the reference. Content margin and row spacing are separate controls. PDFs with mixed shapes still fit within one finished page size, preserving artwork without cropping.

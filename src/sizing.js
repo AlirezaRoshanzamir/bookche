@@ -1,3 +1,5 @@
+import { parseRanges } from "./layout.js";
+
 // PDF dimensions describe the visible crop box, with page rotation applied.
 export function displayedPageSize(width, height, rotation = 0) {
   return Math.abs(rotation % 180) === 90
@@ -13,6 +15,31 @@ export function validPageSize(size) {
     size.width > 0 &&
     size.height > 0
   );
+}
+
+// Covers and scan inserts can have a different shape from the book's pages.
+export function pageReference(book, pageSizes = []) {
+  let pages;
+  try {
+    pages = parseRanges(book.ranges, book.pageCount);
+  } catch {
+    pages = [1];
+  }
+  const groups = new Map();
+  for (const page of pages) {
+    const size = pageSizes[page - 1];
+    if (!validPageSize(size)) continue;
+    const key = (size.width / size.height).toFixed(4);
+    if (!groups.has(key)) groups.set(key, { ...size, page, matches: 0 });
+    groups.get(key).matches++;
+  }
+  let reference = null;
+  for (const group of groups.values()) {
+    if (!reference || group.matches > reference.matches) reference = group;
+  }
+  return reference
+    ? { ...reference, total: pages.length, mixed: groups.size > 1 }
+    : null;
 }
 
 export function scaleLimits(book, source) {

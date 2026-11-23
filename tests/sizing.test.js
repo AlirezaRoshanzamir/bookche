@@ -4,6 +4,7 @@ import { makeBook } from "../src/layout.js";
 import { normalizeProject, encodeProject } from "../src/storage.js";
 import {
   displayedPageSize,
+  pageReference,
   resizeBook,
   pdfScale,
   ratioLabel,
@@ -153,4 +154,57 @@ test("the percentage shown for unlinked dimensions matches the actual fitted PDF
   const linked = resizeBook(b, "lockAspectRatio", true, source);
   assert.equal(linked.width, 100);
   proportional(linked);
+});
+
+test("linked sizes follow the body pages when the cover has a different shape", () => {
+  const sizes = [
+    { width: 142.169444, height: 222.25 },
+    ...Array.from({ length: 511 }, () => ({
+      width: 126.294444,
+      height: 205.669444,
+    })),
+  ];
+  const b = {
+    ...book(),
+    pageCount: 512,
+    width: 16.86,
+    height: 26.35,
+    margin: 0,
+    lockAspectRatio: true,
+  };
+  const ref = pageReference(b, sizes);
+  assert.equal(ref.page, 2);
+  assert.equal(ref.matches, 511);
+  assert.equal(ref.mixed, true);
+  const matched = resizeBook(b, "lockAspectRatio", true, ref);
+  assert.equal(matched.width, b.width);
+  proportional(matched, sizes[1]);
+});
+
+test("ratio reference respects selected ranges and uses the first selected shape in a tie", () => {
+  const sizes = [
+    { width: 100, height: 200 },
+    { width: 200, height: 100 },
+    { width: 400, height: 200 },
+  ];
+  assert.equal(
+    pageReference({ ...book(), pageCount: 3, ranges: "1-3" }, sizes).page,
+    2,
+  );
+  assert.equal(
+    pageReference({ ...book(), pageCount: 3, ranges: "1" }, sizes).page,
+    1,
+  );
+  const tie = pageReference({ ...book(), pageCount: 3, ranges: "2,1" }, sizes);
+  assert.equal(tie.page, 2);
+  assert.equal(tie.total, 2);
+});
+
+test("ratio reference tolerates invalid ranges and missing metadata while editing", () => {
+  assert.equal(pageReference({ ...book(), ranges: "1-" }, [source]).page, 1);
+  assert.equal(pageReference(book(), []), null);
+  assert.equal(
+    pageReference(book(), [{ width: 0, height: 0 }, source]).page,
+    2,
+  );
 });
