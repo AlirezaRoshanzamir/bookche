@@ -76,7 +76,7 @@ app.innerHTML = `
     <button class="upload-zone" id="upload-zone" data-action="add-books">${icon("plus")}<strong>Add your PDFs</strong><span>Choose files or drop them here</span></button>
     <div class="library-label"><span>IN THIS PROJECT</span><button class="text-btn" data-action="add-sample" title="Add the sample book">Try a sample</button></div>
     <div class="book-list" id="book-list"></div>
-    <div class="library-footer"><div class="privacy-icon">${icon("shield")}</div><strong>Files stay on your device</strong><button class="text-btn" data-action="help">Help</button></div>
+    <div class="library-footer"><div class="privacy-note"><span class="privacy-icon" aria-hidden="true">${icon("shield")}</span><strong>Files stay on your device</strong></div><button class="text-btn" data-action="help">Help</button></div>
   </aside>
   <main class="studio">
     <div class="studio-heading"><h2>Print layout</h2><button class="btn sheet-button" data-action="sheet-setup">${icon("settings")} Sheet setup</button></div>
@@ -345,6 +345,10 @@ function nudgeNumber(input, direction) {
 function pagesPanel(b) {
   return (
     section(
+      "Page range",
+      `${b.includePages ? `<label class="field"><span>PDF page ranges <small>${b.pageCount} available</small></span><input type="text" data-key="ranges" data-target="book" value="${esc(b.ranges)}" placeholder="All pages, or 1-8, 12, 15-20" aria-describedby="range-help"></label><p class="field-help" id="range-help">Leave blank for all pages. Use PDF page numbers.</p><div class="info-pill">${icon("file")} ${selectionLabel(b)}</div>` : `<div class="tip-card">Just the cover. Perfect for a decorative miniature.</div>`}`,
+    ) +
+    section(
       "Dimensions",
       `${selectField(
         "Preset",
@@ -360,10 +364,6 @@ function pagesPanel(b) {
         "book",
         true,
       )}${proportionControls(b)}<div class="field-pair">${numberField("Width", "width", b.width, 5, 300)}${numberField("Height", "height", b.height, 5, 400)}</div>${scaleControl(b)}${numberField("Content margin", "margin", b.margin, 0, 30, 0.1)}<p class="field-help">0 adds no padding. Margins in the PDF remain.</p>`,
-    ) +
-    section(
-      "Page range",
-      `${b.includePages ? `<label class="field"><span>PDF page ranges <small>${b.pageCount} available</small></span><input type="text" data-key="ranges" data-target="book" value="${esc(b.ranges)}" placeholder="All pages, or 1-8, 12, 15-20" aria-describedby="range-help"></label><p class="field-help" id="range-help">Leave blank for all pages. Use PDF page numbers.</p><div class="info-pill">${icon("file")} ${selectionLabel(b)}</div>` : `<div class="tip-card">Just the cover. Perfect for a decorative miniature.</div>`}`,
     ) +
     section(
       "Spacing",

@@ -2764,3 +2764,15 @@ input.scale-slider {
 .settings-section > .cover-source + .field {
   margin-top: 18px;
 }
+.privacy-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.privacy-note .privacy-icon {
+  flex: 0 0 29px;
+  margin: 0;
+}
+.privacy-note strong {
+  line-height: 1.4;
+}
