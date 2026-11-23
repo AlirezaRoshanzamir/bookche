@@ -161,7 +161,7 @@ function renderLibrary() {
       <div class="book-card-top"><button class="book-select" data-action="select-book" data-id="${esc(b.id)}" aria-label="Edit ${esc(b.title)}" aria-pressed="${selected === b.id}"><span class="mini-book" style="--book-color:${esc(b.cover.color)};--book-ink:${esc(b.cover.ink)}"><span>${esc(b.title)}</span></span></button>
       <div class="book-card-text"><input class="book-title-input" type="text" maxlength="160" data-book-title="${esc(b.id)}" aria-label="Book title" value="${esc(b.title)}"><small class="book-source" title="${esc(state.assets[b.assetId]?.name)}">${esc(state.assets[b.assetId]?.name)}</small><small>${b.pageCount} pages / ${displayNumber(b.width)} x ${displayNumber(b.height)} mm</small></div></div>
       <div class="book-card-actions"><label><input type="checkbox" data-include-book="${esc(b.id)}" ${!b.hidden ? "checked" : ""}> Include in print</label><span><button class="icon-btn" data-action="duplicate-book" data-id="${esc(b.id)}" aria-label="Duplicate ${esc(b.title)}" title="Duplicate book">${icon("copy")}</button><button class="icon-btn danger" data-action="delete-book" data-id="${esc(b.id)}" aria-label="Remove ${esc(b.title)}" title="Remove book">${icon("trash")}</button></span></div>
-      <div class="book-card-bottom"><label><input type="checkbox" data-book-part="pages" data-book-id="${esc(b.id)}" aria-label="Pages for ${esc(b.title)}" ${b.includePages ? "checked" : ""}> Pages</label><label><input type="checkbox" data-book-part="cover" data-book-id="${esc(b.id)}" aria-label="Cover for ${esc(b.title)}" ${b.cover.enabled ? "checked" : ""}> Cover</label></div>
+      <div class="book-card-bottom"><label><input type="checkbox" data-book-part="pages" data-book-id="${esc(b.id)}" aria-label="Pages for ${esc(b.title)}" ${b.includePages ? "checked" : ""} ${b.hidden ? "disabled" : ""}> Pages</label><label><input type="checkbox" data-book-part="cover" data-book-id="${esc(b.id)}" aria-label="Cover for ${esc(b.title)}" ${b.cover.enabled ? "checked" : ""} ${b.hidden ? "disabled" : ""}> Cover</label></div>
     </article>`,
         )
         .join("")
@@ -180,12 +180,13 @@ function renderInspector() {
     return;
   }
   const tabDisabled = (tab) =>
-    tab === "pages"
+    book.hidden ||
+    (tab === "pages"
       ? !book.includePages
       : tab === "cover"
         ? !book.cover.enabled
-        : false;
-  if (tabDisabled(inspectorTab))
+        : false);
+  if (!book.hidden && tabDisabled(inspectorTab))
     inspectorTab = book.includePages
       ? "pages"
       : book.cover.enabled
@@ -202,7 +203,7 @@ function renderInspector() {
     )
     .join(
       "",
-    )}</div><div class="inspector-content" role="tabpanel">${inspectorTab === "pages" ? pagesPanel(book) : inspectorTab === "cover" ? coverPanel(book) : cuttingPanel(book)}</div>`;
+    )}</div><div class="inspector-content" role="tabpanel"><fieldset class="book-settings-fields" aria-label="Book print settings" ${book.hidden ? "disabled" : ""}>${inspectorTab === "pages" ? pagesPanel(book) : inspectorTab === "cover" ? coverPanel(book) : cuttingPanel(book)}</fieldset></div>`;
   syncSizingControls();
 }
 const displayNumber = (value) => Number(value.toFixed(2));
@@ -836,7 +837,7 @@ function handleField(field, isInput = false) {
   }
 
   if (field.dataset.includeBook) {
-    editBook("hidden", !field.checked, false, field.dataset.includeBook);
+    editBook("hidden", !field.checked, true, field.dataset.includeBook);
     return;
   }
   if (!field.dataset.key) return;

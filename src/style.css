@@ -2776,3 +2776,19 @@ input.scale-slider {
 .privacy-note strong {
   line-height: 1.4;
 }
+.book-settings-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.book-settings-fields:disabled {
+  opacity: 0.5;
+}
+.book-card.excluded .book-card-bottom {
+  opacity: 0.45;
+}
+.book-card.excluded .book-card-bottom label,
+.book-card.excluded .book-card-bottom input {
+  cursor: not-allowed;
+}
