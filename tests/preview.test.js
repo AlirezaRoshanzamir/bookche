@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { PreviewCache } from "../src/preview-cache.js";
 import {
   fitArtwork,
+  pixelBox,
   fitInside,
   cutGuides,
   coverPanels,
@@ -137,4 +138,21 @@ test("cover artwork fills its box while body pages preserve their proportions", 
     width: 57,
     height: 38,
   });
+});
+
+test("fractional preview page sizes share pixel edges without seams", () => {
+  for (const scale of [1.23, 6.060606, 7.937008]) {
+    const width = 20.243307,
+      height = 32.967123;
+    for (let i = 0; i < 14; i++) {
+      const page = pixelBox(10 + i * width, 10, width, height, scale);
+      const next = pixelBox(10 + (i + 1) * width, 10, width, height, scale);
+      assert.equal(page.x + page.width, next.x);
+      const below = pixelBox(10 + i * width, 10 + height, width, height, scale);
+      assert.equal(page.y + page.height, below.y);
+    }
+    const page = pixelBox(10, 10, width, height, scale);
+    const spaced = pixelBox(10 + width + 2, 10, width, height, scale);
+    assert.ok(spaced.x > page.x + page.width);
+  }
 });

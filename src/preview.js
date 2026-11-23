@@ -2,6 +2,7 @@ import * as pdfjs from "pdfjs-dist";
 import { PreviewCache } from "./preview-cache.js";
 import {
   fitArtwork,
+  pixelBox,
   hasArtwork,
   coverPanels,
   cutGuides,
@@ -12,7 +13,8 @@ import { makeCoverLettering, spineTextFor } from "./cover.js";
 export function createSheetPreview() {
   const ids = new WeakMap(),
     documents = new WeakMap(),
-    lettering = new Map();
+    lettering = new Map(),
+    pageDimensions = new WeakMap();
   let nextId = 0,
     worker,
     generation = 0;
@@ -39,8 +41,22 @@ export function createSheetPreview() {
       const canvas = document.createElement("canvas");
       canvas.width = Math.ceil(viewport.width);
       canvas.height = Math.ceil(viewport.height);
-      await input.render({ canvasContext: canvas.getContext("2d"), viewport })
-        .promise;
+      await input.render({
+        canvasContext: canvas.getContext("2d"),
+        viewport,
+        transform: [
+          canvas.width / viewport.width,
+          0,
+          0,
+          canvas.height / viewport.height,
+          0,
+          0,
+        ],
+      }).promise;
+      pageDimensions.set(canvas, {
+        width: original.width,
+        height: original.height,
+      });
       return canvas;
     } finally {
       input.cleanup();
@@ -204,18 +220,27 @@ export function createSheetPreview() {
           ctx.save();
           ctx.translate(x, y);
           if (image) {
+            const dimensions = pageDimensions.get(image) || image;
             const fit = fitArtwork(
-              image.width,
-              image.height,
+              dimensions.width,
+              dimensions.height,
               width,
               height,
               stretch,
             );
+            const box = pixelBox(
+              x + fit.x,
+              y + fit.y,
+              fit.width,
+              fit.height,
+              pixelsPerMm,
+            );
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
             if (rotation === 180) {
-              ctx.translate(width, height);
+              ctx.translate(box.x + box.width, box.y + box.height);
               ctx.rotate(Math.PI);
-            }
-            ctx.drawImage(image, fit.x, fit.y, fit.width, fit.height);
+              ctx.drawImage(image, 0, 0, box.width, box.height);
+            } else ctx.drawImage(image, box.x, box.y, box.width, box.height);
           } else {
             ctx.fillStyle = "#f1eff4";
             ctx.fillRect(0, 0, width, height);

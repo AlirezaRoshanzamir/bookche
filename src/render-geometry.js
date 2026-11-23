@@ -138,3 +138,15 @@ export function registrationGuides(width, height) {
     },
   ]);
 }
+
+// Round shared boundaries together so adjacent images use the same pixel edge.
+export function pixelBox(x, y, width, height, scale) {
+  const left = Math.round(x * scale),
+    top = Math.round(y * scale);
+  return {
+    x: left,
+    y: top,
+    width: Math.round((x + width) * scale) - left,
+    height: Math.round((y + height) * scale) - top,
+  };
+}
