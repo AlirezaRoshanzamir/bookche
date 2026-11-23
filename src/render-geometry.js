@@ -153,7 +153,7 @@ export function pixelBox(x, y, width, height, scale) {
 }
 
 export const GRID_DOT_RADIUS = 0.1;
-export const GRID_DOT_COLOR = "#d0d0d0";
+export const GRID_DOT_COLOR = "#b8b8b8";
 export function cuttingGridPoints(width, height, face, settings, frontPieces) {
   if (settings.cuttingGrid === false) return [];
   const step = Math.max(2, Math.min(20, Number(settings.gridSpacing) || 5));

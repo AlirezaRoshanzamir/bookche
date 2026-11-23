@@ -2965,6 +2965,10 @@ input.scale-slider {
 .sheet-advanced-content[hidden] {
   display: none;
 }
+.sheet-option-with-divider {
+  display: inline-flex;
+  align-items: center;
+}
 .sheet-more,
 .sheet-inline-action {
   display: inline-flex;

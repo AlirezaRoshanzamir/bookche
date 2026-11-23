@@ -564,6 +564,13 @@ function renderSheetControls() {
     ${sheetToggle("Registration marks", "registration", s.registration, "Crosses 5 mm from sheet corners")}
     <button class="sheet-inline-action" data-action="calibration" title="Download a ruler and 20 mm square to check print size">${icon("download")} Calibration PDF</button>
   </div>`;
+  for (const control of [...$("#sheet-advanced").children]) {
+    const group = document.createElement("div");
+    group.className = "sheet-option-with-divider";
+    control.before(group);
+    group.innerHTML = '<span class="summary-divider" aria-hidden="true"></span>';
+    group.append(control);
+  }
   syncSheetValueWidths();
   syncNumberPickers();
   if (focusedKey)
