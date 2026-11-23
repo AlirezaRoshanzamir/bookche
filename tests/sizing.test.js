@@ -208,3 +208,40 @@ test("ratio reference tolerates invalid ranges and missing metadata while editin
     2,
   );
 });
+
+test("back-cover text survives project saves, keeps blank text, and defaults for older projects", () => {
+  const b = book(),
+    project = {
+      version: 1,
+      books: [b],
+      assets: {
+        asset: {
+          id: "asset",
+          mime: "application/pdf",
+          bytes: new Uint8Array([1]),
+          pageCount: 2,
+          pageSizes: [source, source],
+        },
+      },
+    };
+  for (const message of [
+    "A story for you.\nKeep it close.",
+    "",
+    "کتاب کوچک من",
+    "<script>plain text</script>",
+  ]) {
+    b.cover.backText = message;
+    assert.equal(
+      normalizeProject(JSON.parse(encodeProject(project)), true).books[0].cover
+        .backText,
+      message,
+    );
+  }
+  delete b.cover.backText;
+  assert.equal(
+    normalizeProject(project).books[0].cover.backText,
+    "A little world.\nYours to make.",
+  );
+  b.cover.backText = "x".repeat(501);
+  assert.equal(normalizeProject(project).books[0].cover.backText.length, 500);
+});

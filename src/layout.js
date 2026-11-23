@@ -1,3 +1,4 @@
+export const DEFAULT_BACK_TEXT = "A little world.\nYours to make.";
 export const PAPERS = {
   A5: [148, 210],
   A4: [210, 297],
@@ -64,6 +65,7 @@ export function makeBook(id, title, assetId, pageCount) {
       ink: "#f7edd6",
       gradient: true,
       subtitle: "A BOOKCHE EDITION",
+      backText: DEFAULT_BACK_TEXT,
       front: { type: "generated" },
       back: { type: "generated" },
       spineSource: { type: "generated" },

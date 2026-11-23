@@ -1,3 +1,4 @@
+import { DEFAULT_BACK_TEXT } from "./layout.js";
 function wrapText(text, max = 18) {
   const lines = [];
   let line = "";
@@ -19,6 +20,7 @@ export function makeCoverLettering(
   role,
   subtitle = "",
   scale = 12,
+  backText = DEFAULT_BACK_TEXT,
 ) {
   // Browser fonts preserve non-Latin book titles as well as Latin text.
   const canvas = document.createElement("canvas");
@@ -49,9 +51,35 @@ export function makeCoverLettering(
     ctx.font = `${Math.min(width * 0.5, 2)}px Georgia, serif`;
     ctx.fillText(text, 0, 0, height * 0.83);
   } else {
-    ctx.font = `${width * 0.065}px Georgia, serif`;
-    ctx.fillText("A little world.", width / 2, height * 0.46);
-    ctx.fillText("Yours to make.", width / 2, height * 0.53);
+    let size = Math.min(width * 0.065, height * 0.055),
+      lines = [];
+    for (let attempt = 0; attempt < 32; attempt++) {
+      ctx.font = `${size}px Georgia, serif`;
+      lines = backText.split(/\r?\n/).flatMap((paragraph) => {
+        const wrapped = [];
+        let line = "";
+        for (const word of paragraph.split(/\s+/).filter(Boolean)) {
+          const next = line ? line + " " + word : word;
+          if (line && ctx.measureText(next).width > width * 0.76) {
+            wrapped.push(line);
+            line = word;
+          } else line = next;
+        }
+        wrapped.push(line);
+        return wrapped;
+      });
+      if (lines.length * size * 1.4 <= height * 0.72) break;
+      size *= 0.9;
+    }
+    const spacing = Math.min(height * 0.07, size * 1.4);
+    lines.forEach((line, i) =>
+      ctx.fillText(
+        line,
+        width / 2,
+        height * 0.495 + (i - (lines.length - 1) / 2) * spacing,
+        width * 0.76,
+      ),
+    );
   }
   return canvas;
 }

@@ -27,12 +27,14 @@ body {
 }
 button,
 input,
+textarea,
 select {
   font: inherit;
 }
 button,
 a,
 input,
+textarea,
 select {
   -webkit-tap-highlight-color: transparent;
 }
@@ -53,6 +55,7 @@ a {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
+textarea:focus-visible,
 select:focus-visible {
   outline: 3px solid #a89ae9;
   outline-offset: 3px;
@@ -62,6 +65,7 @@ button {
   background: none;
 }
 input,
+textarea,
 select {
   width: 100%;
   min-width: 0;
@@ -73,10 +77,12 @@ select {
   line-height: 1.4;
 }
 input:hover,
+textarea:hover,
 select:hover {
   border-color: #b6afd0;
 }
 input:focus,
+textarea:focus,
 select:focus {
   outline: 2px solid #dad4f8;
   outline-offset: 0;
@@ -1068,6 +1074,7 @@ strong {
   font-size: 9px;
   color: #b2a7bd;
 }
+.field textarea,
 .field input,
 .field select {
   font-size: 11px;
@@ -1677,6 +1684,7 @@ dialog h2 {
 .settings-section h3 {
   font-size: 12px;
 }
+.field textarea,
 .field input,
 .field select {
   font-size: 12px;
@@ -1984,6 +1992,7 @@ dialog h2 {
   .settings-section h3 {
     font-size: 13px;
   }
+  .field textarea,
   .field input,
   .field select {
     font-size: 14px;
@@ -2338,6 +2347,7 @@ dialog h2 {
   .source-label {
     font-size: 14px;
   }
+  .field textarea,
   .field input,
   .field select {
     font-size: 14px;
@@ -2614,4 +2624,11 @@ input.scale-slider {
   .proportion-summary .text-btn {
     font-size: 11px;
   }
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 88px;
+  line-height: 1.5;
+  padding: 10px 12px;
 }

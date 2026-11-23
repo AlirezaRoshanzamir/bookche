@@ -88,3 +88,5 @@ Use a recent Chrome, Edge, Firefox, or Safari. If your browser does not support 
 Built with Vite, pdf-lib, and PDF.js. DM Sans and Instrument Serif are bundled locally. Third-party license notices are included in `public/licenses/`.
 
 The size link uses the most common page shape in the selected range, so a differently sized cover does not add white edges to every body page. For existing books, click **Match PDF** to apply the reference. Content margin and row spacing are separate controls. PDFs with mixed shapes still fit within one finished page size, preserving artwork without cropping.
+
+Edit **Cover > Back cover text** to replace the generated back-cover message. Line breaks are preserved and long text wraps to fit; clear the field for a blank back. Uploaded artwork keeps its own lettering.

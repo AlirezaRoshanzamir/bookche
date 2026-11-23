@@ -134,6 +134,7 @@ export function createSheetPreview() {
       c.ink,
       panel.role,
       c.subtitle,
+      c.backText,
       pixelsPerMm,
     ]);
     if (!lettering.has(key)) {
@@ -147,6 +148,7 @@ export function createSheetPreview() {
           panel.role,
           c.subtitle,
           pixelsPerMm,
+          c.backText,
         ),
       );
       if (lettering.size > 40) lettering.delete(lettering.keys().next().value);

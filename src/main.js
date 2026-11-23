@@ -431,7 +431,7 @@ function coverPanel(b) {
           c.mode === "generated"
             ? "The cover palette"
             : "Generated piece palette",
-          `<div class="field-pair"><label class="field"><span>Cover color</span><div class="color-field"><input type="color" data-key="cover.color" data-target="book" value="${esc(c.color)}"><span>${esc(c.color)}</span></div></label><label class="field"><span>Lettering</span><div class="color-field"><input type="color" data-key="cover.ink" data-target="book" value="${esc(c.ink)}"><span>${esc(c.ink)}</span></div></label></div><div class="swatches">${["#354c45", "#5146b9", "#87464f", "#263951", "#b07335", "#342e3a"].map((col) => `<button class="swatch ${c.color === col ? "active" : ""}" style="--swatch:${col}" data-action="cover-color" data-color="${col}" aria-label="Use cover color ${col}"></button>`).join("")}</div><label class="field"><span>Edition line</span><input type="text" maxlength="48" data-key="cover.subtitle" data-target="book" value="${esc(c.subtitle)}"></label>${toggle("Soft gradient", "A little depth on generated pieces.", "cover.gradient", c.gradient, "book", false)}<p class="field-help">Unspecified pieces use this design. The title comes from the Pages tab.</p>`,
+          `<div class="field-pair"><label class="field"><span>Cover color</span><div class="color-field"><input type="color" data-key="cover.color" data-target="book" value="${esc(c.color)}"><span>${esc(c.color)}</span></div></label><label class="field"><span>Lettering</span><div class="color-field"><input type="color" data-key="cover.ink" data-target="book" value="${esc(c.ink)}"><span>${esc(c.ink)}</span></div></label></div><div class="swatches">${["#354c45", "#5146b9", "#87464f", "#263951", "#b07335", "#342e3a"].map((col) => `<button class="swatch ${c.color === col ? "active" : ""}" style="--swatch:${col}" data-action="cover-color" data-color="${col}" aria-label="Use cover color ${col}"></button>`).join("")}</div><label class="field"><span>Edition line</span><input type="text" maxlength="48" data-key="cover.subtitle" data-target="book" value="${esc(c.subtitle)}"></label><label class="field"><span>Back cover text</span><textarea aria-label="Back cover text" rows="4" maxlength="500" data-key="cover.backText" data-target="book">${esc(c.backText)}</textarea></label><p class="field-help">For the generated back cover. Line breaks are kept; leave blank for no text. Uploaded back or full-wrap artwork keeps its own text.</p>${toggle("Soft gradient", "A little depth on generated pieces.", "cover.gradient", c.gradient, "book", false)}<p class="field-help">Unspecified pieces use this design. The title comes from the Pages tab.</p>`,
         )
       : "")
   );
@@ -841,7 +841,9 @@ app.addEventListener("change", (event) => {
 });
 app.addEventListener("input", (event) => {
   if (
-    ["text", "number", "color", "range"].includes(event.target.type) &&
+    ["text", "textarea", "number", "color", "range"].includes(
+      event.target.type,
+    ) &&
     event.target.dataset.key
   ) {
     handleField(event.target, true);

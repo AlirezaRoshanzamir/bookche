@@ -115,8 +115,18 @@ async function generatedText(
   ink,
   role,
   subtitle = "",
+  backText,
 ) {
-  const canvas = makeCoverLettering(text, width, height, ink, role, subtitle);
+  const canvas = makeCoverLettering(
+    text,
+    width,
+    height,
+    ink,
+    role,
+    subtitle,
+    12,
+    backText,
+  );
   return doc.embedPng(
     await (await fetch(canvas.toDataURL("image/png"))).arrayBuffer(),
   );
@@ -269,6 +279,7 @@ export async function buildPdf(
           c.ink,
           role,
           c.subtitle,
+          c.backText,
         ),
       );
     page.drawImage(textImages.get(key), { x, y, width: w, height: h });

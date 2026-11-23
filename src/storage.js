@@ -176,6 +176,10 @@ export function normalizeProject(data, encoded = false) {
       ink: hex(c.ink || "#f7edd6"),
       gradient: c.gradient !== false,
       subtitle: text(c.subtitle, 48),
+      backText:
+        typeof c.backText === "string"
+          ? text(c.backText, 500)
+          : b.cover.backText,
     });
     for (const key of ["front", "back", "spineSource", "wrap"]) {
       const input = c[key];
