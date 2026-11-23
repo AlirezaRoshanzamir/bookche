@@ -201,7 +201,7 @@ export function normalizeProject(data, encoded = false) {
       b.cover[key] = {
         type: oneOf(input.type, ["book", "asset"], "generated"),
         ...(input.type === "asset" ? { assetId: aid } : {}),
-        page: finite(input.page, 1, assets[aid].pageCount, 1),
+        page: Math.trunc(finite(input.page, 1, assets[aid].pageCount, 1)),
       };
     }
     return b;

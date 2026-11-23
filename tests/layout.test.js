@@ -326,3 +326,96 @@ test("row settings survive project loading and old projects keep separate rows",
   assert.equal(loaded.pagesStartOnNewRow, true);
   assert.equal(loaded.cover.startOnNewRow, false);
 });
+
+test("books with both parts disabled do not break shared rows or validate unused settings", () => {
+  const a = book(1), empty = makeBook("empty", "Empty", "asset", 1), b = makeBook("b", "B", "asset", 1);
+  a.cover.enabled = b.cover.enabled = false;
+  empty.includePages = empty.cover.enabled = false;
+  empty.margin = 30;
+  empty.markPages = "custom";
+  empty.markRanges = "invalid";
+  b.startOnNewRow = b.pagesStartOnNewRow = false;
+  const layout = computeLayout([a, empty, b], defaultSettings());
+  assert.deepEqual(layout.errors, []);
+  assert.deepEqual(layout.sheets[0].front.map(p => [p.bookId, p.x, p.y]), [
+    [a.id, 10, 10], [b.id, 35, 10],
+  ]);
+});
+
+test("cover-only books ignore body margins and custom page mark ranges", () => {
+  const b = book();
+  b.includePages = false;
+  b.margin = 20;
+  b.markPages = "custom";
+  b.markRanges = "99";
+  b.ranges = "also invalid";
+  const result = computeLayout([b], duplex());
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.sheets[0].front[0].kind, "cover");
+  assert.equal(result.sheets[0].back.length, 0);
+  b.includePages = true;
+  assert.match(computeLayout([b], duplex()).errors.join(" "), /content margin/);
+});
+
+test("mixed-book feature combinations preserve bounds, reading order and duplex pairing (1536 layouts)", () => {
+  let count = 0;
+  for (const paper of ["A5", "A4", "A3", "Letter", "Legal", "Custom"])
+    for (const orientation of ["portrait", "landscape"])
+      for (const mode of ["single", "duplex"])
+        for (const flip of ["long", "short"])
+          for (let flags = 0; flags < 8; flags++)
+            for (let parts = 0; parts < 4; parts++) {
+              const settings = { ...defaultSettings(), paper, orientation, mode, flip, customWidth: 120, customHeight: 100 };
+              const books = Array.from({ length: 3 }, (_, i) => {
+                const b = makeBook(`b${i}`, `Book ${i}`, "asset", 13);
+                Object.assign(b, { width: 14 + i * 7, height: 21 + i * 9, rowGap: i, columnGap: i, ranges: "3-9, 1", startOnNewRow: !!(flags & 1), pagesStartOnNewRow: !!(flags & 2) });
+                b.cover.startOnNewRow = !!(flags & 4);
+                if (i === 1) {
+                  b.includePages = !!(parts & 1);
+                  b.cover.enabled = !!(parts & 2);
+                }
+                return b;
+              });
+              const result = computeLayout(books, settings);
+              assert.deepEqual(result.errors, []);
+              const fronts = result.sheets.flatMap(s => s.front), backs = result.sheets.flatMap(s => s.back);
+              for (const b of books) {
+                const selected = parseRanges(b.ranges, b.pageCount);
+                assert.deepEqual(fronts.filter(p => p.bookId === b.id && p.kind === "page").map(p => p.page), b.includePages ? selected.filter((_, i) => mode === "single" || i % 2 === 0) : []);
+                assert.deepEqual(backs.filter(p => p.bookId === b.id).map(p => p.page), b.includePages && mode === "duplex" ? selected.filter((_, i) => i % 2 === 1) : []);
+                assert.equal(fronts.filter(p => p.bookId === b.id && p.kind === "cover").length, b.cover.enabled ? 1 : 0);
+              }
+              const mirrorX = flip === "long" ? result.height >= result.width : result.height < result.width;
+              for (const sheet of result.sheets) {
+                for (const side of [sheet.front, sheet.back]) {
+                  for (const [i, a] of side.entries()) {
+                    assert.ok(a.x >= 10 - 1e-6 && a.y >= 10 - 1e-6 && a.x + a.width <= result.width - 10 + 1e-6 && a.y + a.height <= result.height - 10 + 1e-6);
+                    for (const b of side.slice(i + 1)) {
+                      const overlapX = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
+                      const overlapY = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
+                      assert.ok(overlapX < 1e-6 || overlapY < 1e-6);
+                    }
+                  }
+                }
+                for (const back of sheet.back) {
+                  const selection = parseRanges(books.find(b => b.id === back.bookId).ranges, 13);
+                  const frontPage = selection[selection.indexOf(back.page) - 1];
+                  const front = sheet.front.find(p => p.bookId === back.bookId && p.page === frontPage);
+                  assert.ok(front);
+                  assert.equal(back.x, mirrorX ? result.width - front.x - front.width : front.x);
+                  assert.equal(back.y, mirrorX ? front.y : result.height - front.y - front.height);
+                }
+              }
+              count++;
+            }
+  assert.equal(count, 1536);
+});
+
+test("cover PDF page selections load as whole page numbers", () => {
+  const b = book();
+  b.cover.front = { type: "book", page: 1.5 };
+  const loaded = normalizeProject({ version: 1, books: [b], assets: { asset: {
+    bytes: new Uint8Array([1]), mime: "application/pdf", pageCount: 12,
+  } } });
+  assert.equal(loaded.books[0].cover.front.page, 1);
+});

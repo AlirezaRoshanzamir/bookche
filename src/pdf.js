@@ -2,7 +2,7 @@ import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
 import * as pdfjs from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { mm, outputFaces } from "./layout.js";
-import { makeCoverLettering, spineTextFor } from "./cover.js";
+import { makeCoverLettering, spineTextFor, coverGradientColor } from "./cover.js";
 import {
   fitArtwork,
   coverPanels,
@@ -14,6 +14,7 @@ import {
   GRID_DOT_COLOR,
 } from "./render-geometry.js";
 import { displayedPageSize } from "./sizing.js";
+import { embedSourcePage } from "./pdf-source.js";
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 export async function inspectPdfDetails(bytes) {
   const document = await PDFDocument.load(bytes, { updateMetadata: false });
@@ -189,18 +190,7 @@ export async function buildPdf(
       if (!embedded.has(key))
         embedded.set(
           key,
-          await doc.embedPage(
-            input.getPage(index),
-            (() => {
-              const c = input.getPage(index).getCropBox();
-              return {
-                left: c.x,
-                bottom: c.y,
-                right: c.x + c.width,
-                top: c.y + c.height,
-              };
-            })(),
-          ),
+          await embedSourcePage(doc, input.getPage(index)),
         );
       const image = embedded.get(key),
         rotation =
@@ -256,8 +246,7 @@ export async function buildPdf(
           y: y + (h * i) / 24,
           width: w,
           height: h / 24 + 0.1,
-          color: rgb(0, 0, 0),
-          opacity: 0.12 * (1 - i / 24),
+          color: color(coverGradientColor(c.color, i)),
         });
     if (role !== "spine") {
       page.drawRectangle({

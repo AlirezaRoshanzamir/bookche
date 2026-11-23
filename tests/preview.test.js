@@ -247,3 +247,14 @@ test("cutting grid leaves the blank reverse of a cover or unpaired page unmarked
     ),
   );
 });
+
+test("disabled cut marks ignore stale custom ranges while keeping the outer border", () => {
+  const b = makeBook("b", "Book", "asset", 4);
+  b.marks = "none";
+  b.markPages = "custom";
+  b.markRanges = "invalid";
+  const piece = { kind: "page", page: 2, width: 25, height: 35 };
+  assert.deepEqual(cutGuides(piece, b), []);
+  b.border = true;
+  assert.deepEqual(cutGuides(piece, b).map(s => s.type), ["outline"]);
+});

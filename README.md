@@ -41,6 +41,7 @@ No hosting secrets or environment variables are needed.
 - **Cover**: generate a cover, supply a complete wrap, or select front, spine, and back independently. A source can be a page in the book, an uploaded PDF page, a PNG, or a JPG. Unspecified pieces use the generated design. Separate pieces are assembled into a flat back/spine/front wrap. Overhang is added to all four edges of each cover panel. Cover artwork stretches to fill its assigned panel or full wrap, including artwork taken from PDF pages.
 - **Cutting**: choose tiny corner lines, filled squares, or no marks. Place them in any corner on all pages, odd/even pages, PDF page 1, or custom page ranges. You can also add a fine outline. Cover marks include small spine-fold ticks.
 - **Number controls**: use the visible + / - buttons, type a value, or press Up / Down in a number field. The controls respect each setting's limits, including linked page sizes.
+- **Shared rows**: each book card, Pages tab, and Cover tab has a **Start on a new row** setting. Turn off the relevant settings to continue after preceding content when there is room. Each row uses the height of its tallest piece and the largest row gap of its contents. Books with both parts off take no space.
 - **Sheet setup**: choose A5, A4, A3, US Letter, US Legal, or a custom sheet; orientation; safe printer margins; and print mode. Registration crosses and back-side offsets help with alignment.
 - **Preview**: browse every sheet side, zoom, open the sheet overview, or click a piece to edit its book. The live preview draws only the sheet you are viewing, reusing cached page images as you change dimensions and spacing. New pages load progressively. Preview and export share millimeter geometry, artwork fitting, and cutting guides; the full vector PDF is built when you print or export.
 
@@ -75,13 +76,14 @@ Use a recent Chrome, Edge, Firefox, or Safari. If your browser does not support 
 ## Source map
 
 - `src/layout.js`: millimeter geometry, ranges, packing, duplex transformations, output filtering.
-- `src/pdf.js`: source embedding, cover artwork, PDF export, calibration.
+- `src/pdf.js` and `src/pdf-source.js`: source embedding, blank PDF pages, cover artwork, PDF export, calibration.
 - `src/preview.js` and `src/preview-cache.js`: progressive visible-sheet rendering and bounded page-image caching.
 - `src/render-geometry.js` and `src/cover.js`: artwork fitting, guides, and cover lettering shared by preview and export.
 - `src/sizing.js`: PDF aspect ratios, linked dimensions, percentage scaling, and number increments.
 - `src/storage.js`: IndexedDB and portable project validation.
 - `src/main.js`: workbench UI, files, preview, printing, and project actions.
 - `tests/layout.test.js`: layout and project-validation regression tests.
+- `tests/pdf-source.test.js`: blank-page and cropped-page embedding checks.
 - `tests/preview.test.js`: cache reuse, concurrency, stale work, eviction, and shared drawing geometry.
 - `tests/sizing.test.js`: linked dimensions, percentage scales, margins, rotation, and number-picker limits.
 
@@ -96,3 +98,5 @@ Book cards contain the editable title, duplicate/remove buttons, and Pages/Cover
 Touching pages share pixel boundaries in the preview to avoid thumbnail-rounding seams. Export keeps exact millimeter positions; PDF viewers may still show hairlines at some zoom levels because of edge smoothing, even where page boundaries touch. Margins already in the source PDF are preserved.
 
 Removing a book asks for confirmation, with Undo available after removal. The faint dotted **Cutting grid** covers empty sheet areas in preview and print/PDF without marking artwork. Turn it off or change its spacing in **Sheet setup > Sheet guides**. Grid positions follow the same duplex flip and back offsets as the pages.
+
+The layout tests include 1,536 mixed-book combinations across paper sizes, orientations, print modes, flip edges, row settings, and enabled parts. Browser checks cover importing, saving/reopening, removal/Undo, cover sources, validation, print preview, and PDF export. Blank source pages remain blank leaves. Page-only margins and mark ranges do not block cover-only output.

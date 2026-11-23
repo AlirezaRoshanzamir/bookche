@@ -1,4 +1,4 @@
-import { spineTextFor } from "../src/cover.js";
+import { spineTextFor, coverGradientColor } from "../src/cover.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { makeBook } from "../src/layout.js";
@@ -301,4 +301,17 @@ test("cutting-grid preferences survive project saves and use safe defaults", () 
   const old = normalizeProject(project);
   assert.equal(old.settings.cuttingGrid, true);
   assert.equal(old.settings.gridSpacing, 5);
+});
+
+// Opaque shades let neighboring gradient strips overlap without dark seams.
+test("cover gradient shades stay opaque and progress from dark to light", () => {
+  assert.equal(coverGradientColor("#354c45", 0), "#2f433d");
+  let previous = 0;
+  for (let i = 0; i < 24; i++) {
+    const shade = coverGradientColor("#ffffff", i);
+    assert.match(shade, /^#[0-9a-f]{6}$/);
+    const channel = parseInt(shade.slice(1, 3), 16);
+    assert.ok(channel >= previous);
+    previous = channel;
+  }
 });

@@ -74,6 +74,7 @@ export function cutGuides(piece, book) {
       stroke: "#595959",
       lineWidth: 0.06,
     });
+  if (book.marks === "none") return shapes;
   const marked =
     piece.kind === "cover" ||
     book.markPages === "all" ||
@@ -82,7 +83,7 @@ export function cutGuides(piece, book) {
     (book.markPages === "even" && piece.page % 2 === 0) ||
     (book.markPages === "custom" &&
       parseRanges(book.markRanges, book.pageCount).includes(piece.page));
-  if (book.marks === "none" || !marked) return shapes;
+  if (!marked) return shapes;
   for (const [corner, x, y, sx, sy] of [
     ["tl", 0.12, 0.12, 1, 1],
     ["tr", w - 0.12, 0.12, -1, 1],

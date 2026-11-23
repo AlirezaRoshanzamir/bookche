@@ -1,4 +1,17 @@
 import { DEFAULT_BACK_TEXT } from "./layout.js";
+export function coverGradientColor(hex, band) {
+  const brightness = 1 - 0.12 * (1 - band / 24);
+  return (
+    "#" +
+    [1, 3, 5]
+      .map((start) =>
+        Math.round(parseInt(hex.slice(start, start + 2), 16) * brightness)
+          .toString(16)
+          .padStart(2, "0"),
+      )
+      .join("")
+  );
+}
 function wrapText(text, max = 18) {
   const lines = [];
   let line = "";

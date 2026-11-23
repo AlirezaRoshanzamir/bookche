@@ -143,7 +143,7 @@ export function computeLayout(books, settings) {
     rowHeight = 0;
     rowGap = 0;
   };
-  const place = (piece, back, gap, verticalGap) => {
+  const place = (piece, back, gap, verticalGap, startOnNewRow = false) => {
     if (
       piece.width > width - margin * 2 + 0.001 ||
       piece.height > height - margin * 2 + 0.001
@@ -153,6 +153,7 @@ export function computeLayout(books, settings) {
       );
       return;
     }
+    if (startOnNewRow) nextRow();
     if (!sheet) newSheet();
     if (x + piece.width > width - margin + 0.001) nextRow();
     if (y + piece.height > height - margin + 0.001) newSheet();
@@ -185,13 +186,14 @@ export function computeLayout(books, settings) {
     rowGap = Math.max(rowGap, verticalGap);
   };
   for (const book of books) {
-    if (book.hidden) continue;
+    if (book.hidden || (!book.includePages && !book.cover.enabled)) continue;
     if (
       !(
         book.width > 0 &&
         book.height > 0 &&
-        book.margin >= 0 &&
-        book.margin * 2 < Math.min(book.width, book.height)
+        (!book.includePages ||
+          (book.margin >= 0 &&
+            book.margin * 2 < Math.min(book.width, book.height)))
       )
     ) {
       errors.push(
@@ -199,9 +201,8 @@ export function computeLayout(books, settings) {
       );
       continue;
     }
-    if (book.startOnNewRow !== false) nextRow();
+    let startOnNewRow = book.startOnNewRow !== false;
     if (book.cover.enabled) {
-      if (book.cover.startOnNewRow === true) nextRow();
       const cw = book.width + book.cover.overhang * 2,
         ch = book.height + book.cover.overhang * 2;
       place(
@@ -215,9 +216,11 @@ export function computeLayout(books, settings) {
         null,
         3,
         book.rowGap,
+        startOnNewRow || book.cover.startOnNewRow === true,
       );
+      startOnNewRow = false;
     }
-    if (book.marks !== "none" && book.markPages === "custom") {
+    if (book.includePages && book.marks !== "none" && book.markPages === "custom") {
       try {
         parseRanges(book.markRanges, book.pageCount);
       } catch (error) {
@@ -239,13 +242,13 @@ export function computeLayout(books, settings) {
       width: book.width,
       height: book.height,
     };
-    if (pages.length && book.pagesStartOnNewRow !== false) nextRow();
     for (let i = 0; i < pages.length; i += duplex ? 2 : 1) {
       place(
         { ...base, page: pages[i] },
         duplex && pages[i + 1] ? { ...base, page: pages[i + 1] } : null,
         duplex ? book.columnGap : 0,
         book.rowGap,
+        i === 0 && (startOnNewRow || book.pagesStartOnNewRow !== false),
       );
     }
     if (duplex && pages.length % 2)

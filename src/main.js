@@ -265,6 +265,14 @@ function syncNumberPickers() {
     });
   });
 }
+function syncCoverDimensions() {
+  const book = bookNow(),
+    label = $(".cover-schematic small");
+  if (book && label) {
+    const panelWidth = book.width + book.cover.overhang * 2;
+    label.textContent = `${(panelWidth * 2 + book.cover.spine).toFixed(1)} x ${(book.height + book.cover.overhang * 2).toFixed(1)} mm unfolded`;
+  }
+}
 function syncSizingControls(skip = null) {
   const book = bookNow();
   if (!book || inspectorMode !== "book") {
@@ -321,6 +329,7 @@ function syncSizingControls(skip = null) {
   const scaleHelp = $(".scale-help");
   if (scaleHelp && source)
     scaleHelp.textContent = `Scale relative to PDF page ${source.page}.`;
+  syncCoverDimensions();
   syncNumberPickers();
 }
 function applySizing(key, value, rebuild = false, skip = null) {
@@ -655,7 +664,9 @@ function refreshLayout() {
         `<div class="layout-warning">${icon("info")}<span>${esc(t)}</span></div>`,
     ),
   ].join("");
-  const enabled = state.books.filter((b) => !b.hidden),
+  const enabled = state.books.filter(
+      (b) => !b.hidden && (b.includePages || b.cover.enabled),
+    ),
     pieces = layout.sheets.reduce(
       (n, sheet) => n + sheet.front.length + sheet.back.length,
       0,
@@ -868,6 +879,10 @@ function handleField(field, isInput = false) {
       return;
     }
     value = Math.min(Number(field.max), Math.max(Number(field.min), value));
+    if (/^cover\.(front|back|spineSource|wrap)\.page$/.test(key)) {
+      value = Math.trunc(value);
+      field.value = value;
+    }
     if (!isInput) field.value = value;
   }
   if (field.dataset.target === "settings") {
@@ -908,6 +923,7 @@ function handleField(field, isInput = false) {
       field.hasAttribute("data-rebuild") || spineVisibilityChanged,
     );
     if (restoreSpineFocus) $('input[data-key="cover.spine"]')?.focus();
+    if (key === "cover.spine" || key === "cover.overhang") syncCoverDimensions();
     if (key === "cover.color" || key === "cover.ink") {
       const label = field.parentElement.querySelector("span");
       if (label) label.textContent = value;
@@ -1043,6 +1059,7 @@ $("#pdf-input").addEventListener("change", async (event) => {
 $("#cover-input").addEventListener("change", async (event) => {
   const request = coverRequest,
     file = event.target.files[0];
+  event.target.value = "";
   if (!file || !request) return;
   try {
     const asset = await readAsset(file, true);
@@ -1175,8 +1192,18 @@ async function printProject() {
           canvas = document.createElement("canvas");
         canvas.width = Math.ceil(viewport.width);
         canvas.height = Math.ceil(viewport.height);
-        await page.render({ canvasContext: canvas.getContext("2d"), viewport })
-          .promise;
+        await page.render({
+          canvasContext: canvas.getContext("2d"),
+          viewport,
+          transform: [
+            canvas.width / viewport.width,
+            0,
+            0,
+            canvas.height / viewport.height,
+            0,
+            0,
+          ],
+        }).promise;
         const image = document.createElement("img");
         image.alt = `Print side ${n}`;
         image.src = canvas.toDataURL("image/png");

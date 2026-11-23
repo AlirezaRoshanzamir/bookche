@@ -11,7 +11,7 @@ import {
   GRID_DOT_RADIUS,
   GRID_DOT_COLOR,
 } from "./render-geometry.js";
-import { makeCoverLettering, spineTextFor } from "./cover.js";
+import { makeCoverLettering, spineTextFor, coverGradientColor } from "./cover.js";
 
 export function createSheetPreview() {
   const ids = new WeakMap(),
@@ -137,7 +137,7 @@ export function createSheetPreview() {
     ctx.fillRect(0, 0, w, h);
     if (c.gradient)
       for (let i = 0; i < 24; i++) {
-        ctx.fillStyle = `rgba(0,0,0,${0.12 * (1 - i / 24)})`;
+        ctx.fillStyle = coverGradientColor(c.color, i);
         ctx.fillRect(0, (h * (23 - i)) / 24, w, h / 24 + (0.1 * 25.4) / 72);
       }
     if (panel.role !== "spine") {
