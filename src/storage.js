@@ -1,3 +1,4 @@
+import { validPageSize } from "./sizing.js";
 import { defaultSettings, makeBook } from "./layout.js";
 // Keep the original storage key so existing local projects survive the rename.
 const DB = "small-hours-studio";
@@ -89,11 +90,19 @@ export function normalizeProject(data, encoded = false) {
     total += bytes.length;
     if (total > 200000000)
       throw new Error("Projects must be smaller than 200 MB.");
+    const pageSizes = Array.isArray(item.pageSizes)
+      ? item.pageSizes.map((size) =>
+          validPageSize(size) && size.width <= 100000 && size.height <= 100000
+            ? { width: size.width, height: size.height }
+            : null,
+        )
+      : [];
     assets[id] = {
       id,
       name: text(item.name),
       bytes,
       mime: item.mime,
+      pageSizes,
       pageCount: finite(item.pageCount, 1, 100000, 1),
     };
   }
@@ -140,6 +149,8 @@ export function normalizeProject(data, encoded = false) {
       ["columnGap", 0, 50],
     ])
       b[key] = finite(item[key], low, high, b[key]);
+    // Existing projects keep their exact dimensions until the link is enabled.
+    b.lockAspectRatio = item.lockAspectRatio === true;
     b.includePages = item.includePages !== false;
     b.hidden = !!item.hidden;
     b.border = !!item.border;

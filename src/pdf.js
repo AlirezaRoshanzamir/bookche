@@ -2,11 +2,23 @@ import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
 import * as pdfjs from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { mm, outputFaces, parseRanges } from "./layout.js";
+import { displayedPageSize } from "./sizing.js";
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
-export async function inspectPdf(bytes) {
+export async function inspectPdfDetails(bytes) {
   const document = await PDFDocument.load(bytes, { updateMetadata: false });
   if (!document.getPageCount()) throw new Error("This PDF has no pages.");
-  return document.getPageCount();
+  const pageSizes = document.getPages().map((page) => {
+    const crop = page.getCropBox();
+    return displayedPageSize(
+      (crop.width * 25.4) / 72,
+      (crop.height * 25.4) / 72,
+      page.getRotation().angle,
+    );
+  });
+  return { pageCount: document.getPageCount(), pageSizes };
+}
+export async function inspectPdf(bytes) {
+  return (await inspectPdfDetails(bytes)).pageCount;
 }
 const color = (hex) => {
   const n = parseInt(hex.slice(1), 16);
@@ -81,6 +93,10 @@ export async function createDemoAsset() {
     mime: "application/pdf",
     bytes: await doc.save(),
     pageCount: 12,
+    pageSizes: Array.from({ length: 12 }, () => ({
+      width: (250 * 25.4) / 72,
+      height: (350 * 25.4) / 72,
+    })),
   };
 }
 async function generatedText(

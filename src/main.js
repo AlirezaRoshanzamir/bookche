@@ -12,7 +12,7 @@ import {
   buildPdf,
   calibrationPdf,
   createDemoAsset,
-  inspectPdf,
+  inspectPdfDetails,
 } from "./pdf.js";
 import {
   encodeProject,
@@ -21,6 +21,14 @@ import {
   saveLocal,
 } from "./storage.js";
 import * as pdfjs from "pdfjs-dist";
+import {
+  validPageSize,
+  resizeBook,
+  ratioLabel,
+  pdfScale,
+  scaleLimits,
+  stepNumber,
+} from "./sizing.js";
 
 const $ = (s, root = document) => root.querySelector(s);
 const esc = (value) =>
@@ -98,6 +106,10 @@ function selectedPages(book) {
     return 0;
   }
 }
+function selectionLabel(book) {
+  const count = selectedPages(book);
+  return `${count} page${count === 1 ? "" : "s"} selected`;
+}
 const option = (v, label, chosen) =>
   `<option value="${esc(v)}" ${chosen === v ? "selected" : ""}>${esc(label)}</option>`;
 function selectField(
@@ -120,7 +132,8 @@ function numberField(
   target = "book",
   suffix = "mm",
 ) {
-  return `<label class="field"><span>${label}</span><div class="number-wrap"><input type="number" aria-label="${esc(label)}" data-target="${target}" data-key="${key}" value="${esc(value)}" min="${min}" max="${max}" step="${step}" inputmode="decimal"><span>${suffix}</span></div></label>`;
+  const id = `number-${target}-${key.replaceAll(".", "-")}`;
+  return `<div class="field number-field"><label for="${id}">${label}</label><div class="number-wrap"><button type="button" class="number-step" data-action="step-number" data-direction="-1" aria-label="Decrease ${esc(label)}">${icon("minus")}</button><div class="number-value"><input id="${id}" type="number" aria-label="${esc(label)}" data-target="${target}" data-key="${key}" value="${esc(value)}" min="${min}" max="${max}" step="${step}" inputmode="decimal"><span class="number-unit">${suffix}</span></div><button type="button" class="number-step" data-action="step-number" data-direction="1" aria-label="Increase ${esc(label)}">${icon("plus")}</button></div></div>`;
 }
 function toggle(
   label,
@@ -141,7 +154,7 @@ function renderLibrary() {
     ? state.books
         .map(
           (b, i) =>
-            `<div class="book-card ${selected === b.id && inspectorMode === "book" ? "selected" : ""} ${b.hidden ? "excluded" : ""}"><button class="book-select" data-action="select-book" data-id="${esc(b.id)}" aria-pressed="${selected === b.id}"><span class="mini-book" style="--book-color:${esc(b.cover.color)};--book-ink:${esc(b.cover.ink)}"><span>${esc(b.title)}</span></span><span class="book-card-text"><strong>${esc(b.title)}</strong><small>${b.pageCount} source pages</small><span class="book-size">${b.width} x ${b.height} mm</span></span></button><div class="book-card-bottom"><label><input type="checkbox" data-include-book="${esc(b.id)}" ${!b.hidden ? "checked" : ""}> Include in print</label><span>${String(i + 1).padStart(2, "0")}</span></div></div>`,
+            `<div class="book-card ${selected === b.id && inspectorMode === "book" ? "selected" : ""} ${b.hidden ? "excluded" : ""}"><button class="book-select" data-action="select-book" data-id="${esc(b.id)}" aria-pressed="${selected === b.id}"><span class="mini-book" style="--book-color:${esc(b.cover.color)};--book-ink:${esc(b.cover.ink)}"><span>${esc(b.title)}</span></span><span class="book-card-text"><strong>${esc(b.title)}</strong><small>${b.pageCount} source pages</small><span class="book-size">${displayNumber(b.width)} x ${displayNumber(b.height)} mm</span></span></button><div class="book-card-bottom"><label><input type="checkbox" data-include-book="${esc(b.id)}" ${!b.hidden ? "checked" : ""}> Include in print</label><span>${String(i + 1).padStart(2, "0")}</span></div></div>`,
         )
         .join("")
     : `<div class="empty-library">Your book collection<br>is waiting to begin.</div>`;
@@ -151,6 +164,7 @@ function renderInspector() {
     book = bookNow();
   if (inspectorMode === "sheet") {
     renderSheetInspector();
+    syncNumberPickers();
     return;
   }
   if (!book) {
@@ -169,6 +183,152 @@ function renderInspector() {
     .join(
       "",
     )}</div><div class="inspector-content" role="tabpanel">${inspectorTab === "pages" ? pagesPanel(book) : inspectorTab === "cover" ? coverPanel(book) : cuttingPanel(book)}</div><div class="inspector-bottom">${icon("moon")} A little patience. A lovely little book.</div>`;
+  syncSizingControls();
+}
+const displayNumber = (value) => Number(value.toFixed(2));
+function bookReference(book) {
+  let page = 1;
+  try {
+    page = parseRanges(book.ranges, book.pageCount)[0] || 1;
+  } catch {
+    /* Use the first PDF page until the range is valid. */
+  }
+  const size = state.assets[book.assetId]?.pageSizes?.[page - 1];
+  return validPageSize(size) ? { ...size, page } : null;
+}
+function pagePresetValue(book) {
+  return (
+    ["20x28", "25x35", "30x42", "40x56"].find((value) => {
+      const [w, h] = value.split("x").map(Number);
+      return (
+        Math.abs(book.width - w) < 0.00001 &&
+        (book.lockAspectRatio || Math.abs(book.height - h) < 0.00001)
+      );
+    }) || "custom"
+  );
+}
+function proportionSummary(book) {
+  const source = bookReference(book);
+  if (!source) return "";
+  return `<div class="proportion-summary"><span class="ratio-page" style="aspect-ratio:${source.width}/${source.height}">${icon("file")}</span><div><strong>PDF ratio <span>${ratioLabel(source)}</span></strong><small>Page ${source.page} / ${displayNumber(source.width)} x ${displayNumber(source.height)} mm</small></div><button class="text-btn" data-action="match-pdf-size">Match PDF</button></div>`;
+}
+function proportionControls(book) {
+  return (
+    proportionSummary(book) +
+    toggle(
+      "Link width & height",
+      "Keep the artwork in its PDF proportions.",
+      "lockAspectRatio",
+      book.lockAspectRatio,
+    )
+  );
+}
+function scaleControl(book) {
+  const source = bookReference(book);
+  if (!source) return "";
+  const limits = scaleLimits(book, source),
+    scale = displayNumber(pdfScale(book, source));
+  return `${numberField("PDF scale", "pdfScale", scale, 0.1, 10000, 0.5, "book", "%")}<input class="scale-slider" type="range" min="${limits.min}" max="${limits.max}" step="any" value="${scale}" data-target="book" data-key="pdfScale" aria-label="PDF scale slider"><p class="field-help scale-help">Resize both sides together as a percentage of PDF page ${source.page}. Matching the PDF avoids extra space from a different page shape.</p>`;
+}
+function syncNumberPickers() {
+  document.querySelectorAll(".number-wrap").forEach((picker) => {
+    const input = picker.querySelector("input");
+    const value = Number(input.value);
+    picker.querySelectorAll(".number-step").forEach((button) => {
+      let atMin = value <= Number(input.min),
+        atMax = value >= Number(input.max);
+      if (input.dataset.key === "pdfScale" && bookNow()) {
+        const source = bookReference(bookNow());
+        if (source) {
+          const bounds = scaleLimits(bookNow(), source),
+            scale = pdfScale(bookNow(), source);
+          atMin = scale <= bounds.min + 0.00001;
+          atMax = scale >= bounds.max - 0.00001;
+        }
+      }
+      button.disabled = button.dataset.direction === "-1" ? atMin : atMax;
+    });
+  });
+}
+function syncSizingControls(skip = null) {
+  const book = bookNow();
+  if (!book || inspectorMode !== "book") {
+    syncNumberPickers();
+    return;
+  }
+  const source = bookReference(book);
+  const link = $('input[data-key="lockAspectRatio"]');
+  if (link) link.checked = book.lockAspectRatio;
+  for (const key of ["width", "height", "margin", "pdfScale"]) {
+    const input = $(`input[type="number"][data-key="${key}"]`);
+    if (!input) continue;
+    if (key === "pdfScale" && !source) continue;
+    if (key === "pdfScale") {
+      const bounds = scaleLimits(book, source);
+      input.min = Math.floor(bounds.min * 100) / 100;
+      input.max = Math.ceil(bounds.max * 100) / 100;
+    } else if (
+      (key === "width" || key === "height") &&
+      source &&
+      book.lockAspectRatio
+    ) {
+      const bounds = scaleLimits(book, source);
+      input.min = Number(
+        ((source[key] * bounds.min) / 100 + book.margin * 2).toFixed(6),
+      );
+      input.max = Number(
+        ((source[key] * bounds.max) / 100 + book.margin * 2).toFixed(6),
+      );
+    }
+    if (input !== skip)
+      input.value =
+        key === "pdfScale"
+          ? displayNumber(pdfScale(book, source))
+          : displayNumber(book[key]);
+  }
+  const slider = $(".scale-slider");
+  if (slider && source) {
+    const bounds = scaleLimits(book, source);
+    slider.min = bounds.min;
+    slider.max = bounds.max;
+    if (slider !== skip) slider.value = pdfScale(book, source);
+  }
+  const preset = $('select[data-key="sizePreset"]');
+  if (preset) {
+    preset.value = pagePresetValue(book);
+    const names = ["Extra tiny", "Classic mini", "Little pocket", "Pocket"];
+    [...preset.options].slice(0, 4).forEach((option, i) => {
+      const [width, height] = option.value.split("x");
+      option.textContent = `${names[i]} - ${width}${book.lockAspectRatio ? " mm wide" : ` x ${height} mm`}`;
+    });
+  }
+  const summary = $(".proportion-summary");
+  if (summary) summary.outerHTML = proportionSummary(book);
+  const scaleHelp = $(".scale-help");
+  if (scaleHelp && source)
+    scaleHelp.textContent = `Resize both sides together as a percentage of PDF page ${source.page}. Matching the PDF avoids extra space from a different page shape.`;
+  syncNumberPickers();
+}
+function applySizing(key, value, rebuild = false, skip = null) {
+  state.books = state.books.map((book) =>
+    book.id === selected
+      ? resizeBook(book, key, value, bookReference(book))
+      : book,
+  );
+  changed({ form: rebuild });
+  syncSizingControls(skip);
+}
+function nudgeNumber(input, direction) {
+  const next = stepNumber(
+    Number(input.value || input.min),
+    direction,
+    Number(input.step),
+    Number(input.min),
+    Number(input.max),
+  );
+  input.value = next;
+  handleField(input);
+  syncNumberPickers();
 }
 function pagesPanel(b) {
   return (
@@ -177,23 +337,39 @@ function pagesPanel(b) {
       `<label class="field"><span>Book title</span><input type="text" data-key="title" data-target="book" value="${esc(b.title)}" maxlength="160"></label>${selectField(
         "Page size",
         "sizePreset",
-        ["20x28", "25x35", "30x42", "40x56"].includes(`${b.width}x${b.height}`)
-          ? `${b.width}x${b.height}`
-          : "custom",
+        pagePresetValue(b),
         [
-          ["20x28", "Extra tiny - 20 x 28 mm"],
-          ["25x35", "Classic mini - 25 x 35 mm"],
-          ["30x42", "Little pocket - 30 x 42 mm"],
-          ["40x56", "Pocket - 40 x 56 mm"],
+          [
+            "20x28",
+            b.lockAspectRatio
+              ? "Extra tiny - 20 mm wide"
+              : "Extra tiny - 20 x 28 mm",
+          ],
+          [
+            "25x35",
+            b.lockAspectRatio
+              ? "Classic mini - 25 mm wide"
+              : "Classic mini - 25 x 35 mm",
+          ],
+          [
+            "30x42",
+            b.lockAspectRatio
+              ? "Little pocket - 30 mm wide"
+              : "Little pocket - 30 x 42 mm",
+          ],
+          [
+            "40x56",
+            b.lockAspectRatio ? "Pocket - 40 mm wide" : "Pocket - 40 x 56 mm",
+          ],
           ["custom", "Custom dimensions"],
         ],
         "book",
         true,
-      )}<div class="field-pair">${numberField("Width", "width", b.width, 5, 300)}${numberField("Height", "height", b.height, 5, 400)}</div>${numberField("Content margin", "margin", b.margin, 0, 30, 0.1)}<p class="field-help">White space inside each cut page. PDF proportions are always preserved.</p>`,
+      )}${proportionControls(b)}<div class="field-pair">${numberField("Width", "width", b.width, 5, 300)}${numberField("Height", "height", b.height, 5, 400)}</div>${scaleControl(b)}${numberField("Content margin", "margin", b.margin, 0, 30, 0.1)}<p class="field-help">White space inside each cut page. Set this to 0 for no added margin. The PDF's own margins remain.</p>`,
     ) +
     section(
       "What goes inside",
-      `${toggle("Include book pages", "Turn off for a cover-only book.", "includePages", b.includePages)}${b.includePages ? `<label class="field"><span>PDF page ranges <small>${b.pageCount} available</small></span><input type="text" data-key="ranges" data-target="book" value="${esc(b.ranges)}" placeholder="All pages, or 1-8, 12, 15-20" aria-describedby="range-help"></label><p class="field-help" id="range-help">PDF page numbers, starting at 1. Blank means all pages. Pairs follow your selected order.</p><div class="info-pill">${icon("file")} ${selectedPages(b)} pages selected</div>` : `<div class="tip-card">Just the cover. Perfect for a decorative miniature.</div>`}`,
+      `${toggle("Include book pages", "Turn off for a cover-only book.", "includePages", b.includePages)}${b.includePages ? `<label class="field"><span>PDF page ranges <small>${b.pageCount} available</small></span><input type="text" data-key="ranges" data-target="book" value="${esc(b.ranges)}" placeholder="All pages, or 1-8, 12, 15-20" aria-describedby="range-help"></label><p class="field-help" id="range-help">PDF page numbers, starting at 1. Blank means all pages. Pairs follow your selected order.</p><div class="info-pill">${icon("file")} ${selectionLabel(b)}</div>` : `<div class="tip-card">Just the cover. Perfect for a decorative miniature.</div>`}`,
     ) +
     section(
       "Room to cut & fold",
@@ -621,10 +797,10 @@ function handleField(field, isInput = false) {
   let value =
     field.type === "checkbox"
       ? field.checked
-      : field.type === "number"
+      : ["number", "range"].includes(field.type)
         ? Number(field.value)
         : field.value;
-  if (field.type === "number") {
+  if (["number", "range"].includes(field.type)) {
     if (
       isInput &&
       (field.value === "" ||
@@ -639,16 +815,25 @@ function handleField(field, isInput = false) {
       return;
     }
     value = Math.min(Number(field.max), Math.max(Number(field.min), value));
-    field.value = value;
+    if (!isInput) field.value = value;
   }
   if (field.dataset.target === "settings") {
     state.settings = { ...state.settings, [key]: value };
     changed({ form: field.hasAttribute("data-rebuild") });
+    syncNumberPickers();
+  } else if (
+    ["width", "height", "margin", "pdfScale", "lockAspectRatio"].includes(key)
+  ) {
+    applySizing(key, value, key === "lockAspectRatio", isInput ? field : null);
   } else if (key === "sizePreset") {
     if (value === "custom") return;
     const [width, height] = value.split("x").map(Number);
     state.books = state.books.map((b) =>
-      b.id === selected ? { ...b, width, height } : b,
+      b.id === selected
+        ? b.lockAspectRatio
+          ? resizeBook(b, "width", width, bookReference(b))
+          : { ...b, width, height }
+        : b,
     );
     changed({ form: true });
   } else if (/^cover\..+\.type$/.test(key)) {
@@ -668,29 +853,40 @@ function handleField(field, isInput = false) {
       if (label) label.textContent = value;
     }
     if (key === "ranges") {
+      const current = bookNow();
+      if (!isInput) {
+        try {
+          parseRanges(current.ranges, current.pageCount);
+          if (current.lockAspectRatio) applySizing("width", current.width);
+          else syncSizingControls();
+        } catch {
+          /* The layout shows the range validation message. */
+        }
+      }
       const pill = $(".info-pill");
-      if (pill)
-        pill.innerHTML = `${icon("file")} ${selectedPages(bookNow())} pages selected`;
-    }
-    if (key === "width" || key === "height") {
-      const b = bookNow(),
-        preset = $('select[data-key="sizePreset"]');
-      if (preset)
-        preset.value = ["20x28", "25x35", "30x42", "40x56"].includes(
-          `${b.width}x${b.height}`,
-        )
-          ? `${b.width}x${b.height}`
-          : "custom";
+      if (pill) pill.innerHTML = `${icon("file")} ${selectionLabel(bookNow())}`;
     }
   }
 }
-app.addEventListener("change", (event) => handleField(event.target));
+app.addEventListener("change", (event) => {
+  handleField(event.target);
+  syncNumberPickers();
+});
 app.addEventListener("input", (event) => {
   if (
-    ["text", "number", "color"].includes(event.target.type) &&
+    ["text", "number", "color", "range"].includes(event.target.type) &&
     event.target.dataset.key
-  )
+  ) {
     handleField(event.target, true);
+    syncNumberPickers();
+  }
+});
+app.addEventListener("keydown", (event) => {
+  const input = event.target;
+  if (input.type === "number" && ["ArrowUp", "ArrowDown"].includes(event.key)) {
+    event.preventDefault();
+    nudgeNumber(input, event.key === "ArrowUp" ? 1 : -1);
+  }
 });
 let coverRequest;
 function pickCover(key) {
@@ -715,10 +911,11 @@ async function readAsset(file, cover = false) {
       "Choose a PDF book, or a PNG, JPG or PDF for cover artwork.",
     );
   const bytes = new Uint8Array(await file.arrayBuffer());
-  let pageCount = 1;
+  let pageCount = 1,
+    pageSizes = [];
   if (mime === "application/pdf") {
     try {
-      pageCount = await inspectPdf(bytes);
+      ({ pageCount, pageSizes } = await inspectPdfDetails(bytes));
     } catch (error) {
       throw new Error(
         `Cannot open ${file.name}. Use a valid PDF without password protection. ${error.message?.includes("encrypted") ? "This file is encrypted." : ""}`,
@@ -736,7 +933,7 @@ async function readAsset(file, cover = false) {
     throw new Error(
       "This project would exceed 200 MB. Start a separate project for more books.",
     );
-  return { id: uid(), name: file.name, mime, bytes, pageCount };
+  return { id: uid(), name: file.name, mime, bytes, pageCount, pageSizes };
 }
 async function addBooks(files) {
   if (!files.length) return;
@@ -753,6 +950,10 @@ async function addBooks(files) {
         asset.pageCount,
       );
       const colors = ["#354c45", "#5146b9", "#87464f", "#263951", "#b07335"];
+      Object.assign(
+        book,
+        resizeBook(book, "lockAspectRatio", true, bookReference(book)),
+      );
       book.cover.color = colors[state.books.length % colors.length];
       state.books = [...state.books, book];
       selected = book.id;
@@ -806,7 +1007,7 @@ $("#project-input").addEventListener("change", async (event) => {
     const project = normalizeProject(JSON.parse(await file.text()), true);
     for (const asset of Object.values(project.assets))
       if (asset.mime === "application/pdf")
-        asset.pageCount = await inspectPdf(asset.bytes);
+        Object.assign(asset, await inspectPdfDetails(asset.bytes));
     project.books.forEach(
       (b) => (b.pageCount = project.assets[b.assetId].pageCount),
     );
@@ -969,6 +1170,17 @@ app.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-action]");
   if (!button || button.disabled) return;
   const action = button.dataset.action;
+  if (action === "step-number") {
+    nudgeNumber(
+      button.closest(".number-wrap").querySelector("input"),
+      Number(button.dataset.direction),
+    );
+    return;
+  }
+  if (action === "match-pdf-size") {
+    applySizing("lockAspectRatio", true, true);
+    return;
+  }
   if (button.tagName === "A") event.preventDefault();
   if (action === "add-books") {
     $("#pdf-input").click();
@@ -1108,6 +1320,10 @@ app.addEventListener("click", async (event) => {
       const asset = await createDemoAsset();
       state.assets[asset.id] = asset;
       const book = makeBook(uid(), "Quiet things", asset.id, asset.pageCount);
+      Object.assign(
+        book,
+        resizeBook(book, "lockAspectRatio", true, bookReference(book)),
+      );
       state.books = [...state.books, book];
       selected = book.id;
       inspectorMode = "book";
@@ -1193,7 +1409,19 @@ async function init() {
     const asset = await createDemoAsset();
     state.assets[asset.id] = asset;
     const book = makeBook(uid(), "Quiet things", asset.id, asset.pageCount);
+    Object.assign(
+      book,
+      resizeBook(book, "lockAspectRatio", true, bookReference(book)),
+    );
     state.books = [book];
+  }
+  for (const asset of Object.values(state.assets)) {
+    if (
+      asset.mime === "application/pdf" &&
+      (asset.pageSizes?.length !== asset.pageCount ||
+        asset.pageSizes.some((size) => !validPageSize(size)))
+    )
+      Object.assign(asset, await inspectPdfDetails(asset.bytes));
   }
   selected = state.books[0]?.id;
   renderLibrary();

@@ -37,9 +37,10 @@ No hosting secrets or environment variables are needed.
 ## Make a book
 
 - **Add your PDFs**: select multiple PDFs or drop them onto the workbench. Each book gets independent settings. Use the checkbox on its card to exclude it from the print without removing it.
-- **Pages**: set finished width and height, an inner content margin, page ranges, and row spacing. Dimensions are millimeters. Original PDF proportions are preserved, with no stretching or cropping. Page numbers refer to the PDF's physical page order, starting at 1.
+- **Pages**: the PDF ratio is detected from the first selected page, including its rotation. Use **Match PDF** or **Link width & height** to keep the artwork area in proportion, or use **PDF scale** to resize both dimensions by percentage. New books start linked. Existing projects retain their dimensions until you enable the link. You can still set finished dimensions independently with the link off, along with an inner content margin, page ranges, and row spacing. Dimensions are millimeters. Original PDF proportions are preserved, with no stretching or cropping. Page numbers refer to the PDF's physical page order, starting at 1.
 - **Cover**: generate a cover, supply a complete wrap, or select front, spine, and back independently. A source can be a page in the book, an uploaded PDF page, a PNG, or a JPG. Unspecified pieces use the generated design. Separate pieces are assembled into a flat back/spine/front wrap. Overhang is added to all four edges of each cover panel.
 - **Cutting**: choose tiny corner lines, filled squares, or no marks. Place them in any corner on all pages, odd/even pages, PDF page 1, or custom page ranges. You can also add a fine outline. Cover marks include small spine-fold ticks.
+- **Number controls**: use the visible + / - buttons, type a value, or press Up / Down in a number field. The controls respect each setting's limits, including linked page sizes.
 - **Sheet setup**: choose A5, A4, A3, US Letter, US Legal, or a custom sheet; orientation; safe printer margins; and print mode. Registration crosses and back-side offsets help with alignment.
 - **Preview**: browse every sheet side, zoom, open the sheet overview, or click a piece to edit its book. The main preview renders the same PDF used for export.
 
@@ -75,8 +76,10 @@ Use a recent Chrome, Edge, Firefox, or Safari. If your browser does not support 
 
 - `src/layout.js`: millimeter geometry, ranges, packing, duplex transformations, output filtering.
 - `src/pdf.js`: source embedding, cover artwork, PDF export, calibration.
+- `src/sizing.js`: PDF aspect ratios, linked dimensions, percentage scaling, and number increments.
 - `src/storage.js`: IndexedDB and portable project validation.
 - `src/main.js`: workbench UI, files, preview, printing, and project actions.
 - `tests/layout.test.js`: layout and project-validation regression tests.
+- `tests/sizing.test.js`: linked dimensions, percentage scales, margins, rotation, and number-picker limits.
 
 Built with Vite, pdf-lib, and PDF.js. DM Sans and Instrument Serif are bundled locally. Third-party license notices are included in `public/licenses/`.

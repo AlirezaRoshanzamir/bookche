@@ -2449,3 +2449,162 @@ dialog h2 {
 .source-file {
   color: #95839f;
 }
+
+/* Numeric controls share the same click and keyboard increments. */
+.number-field > label {
+  display: block;
+  font-size: 14px;
+  color: #776a86;
+  margin-bottom: 7px;
+}
+.number-wrap {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid #dfdce8;
+  border-radius: 7px;
+  background: white;
+  min-height: 41px;
+  overflow: hidden;
+}
+.number-wrap:focus-within {
+  outline: 2px solid #dad4f8;
+  border-color: #897cc9;
+}
+.number-value {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+.field .number-value input {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  padding: 8px 3px;
+  outline: none;
+  text-align: center;
+  background: transparent;
+  font-size: 13px;
+  border-radius: 0;
+}
+.number-value .number-unit {
+  position: static;
+  transform: none;
+  color: #92849f;
+  font-size: 10px;
+  padding-right: 4px;
+  pointer-events: none;
+}
+.number-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 25px;
+  min-width: 25px;
+  padding: 0;
+  background: #f8f6fc;
+  color: #87739f;
+  border-radius: 0;
+  touch-action: manipulation;
+}
+.number-step:first-child {
+  border-right: 1px solid #eee9f4;
+}
+.number-step:last-child {
+  border-left: 1px solid #eee9f4;
+}
+.number-step .icon {
+  width: 12px;
+  height: 12px;
+}
+.number-step:hover:not(:disabled) {
+  background: #e9e2f8;
+  color: #5749bc;
+}
+.number-step:focus-visible {
+  outline-offset: -3px;
+}
+.number-step:disabled {
+  opacity: 0.3;
+}
+.proportion-summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 10px;
+  border: 1px solid #e6e0f2;
+  border-radius: 7px;
+  background: #f9f7fd;
+  margin-top: 15px;
+}
+.ratio-page {
+  width: 21px;
+  max-height: 36px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid #aa9ac3;
+  color: #aa9ac3;
+  background: white;
+  border-radius: 2px;
+}
+.ratio-page .icon {
+  width: 11px;
+  height: 11px;
+}
+.proportion-summary > div {
+  flex: 1;
+  min-width: 0;
+}
+.proportion-summary strong {
+  display: block;
+  font-size: 11px;
+  color: #81718f;
+}
+.proportion-summary strong span {
+  color: #5749bc;
+  white-space: nowrap;
+}
+.proportion-summary small {
+  display: block;
+  font-size: 10px;
+  color: #9b8ca9;
+  line-height: 1.5;
+  margin-top: 3px;
+}
+.proportion-summary .text-btn {
+  font-size: 10px;
+  white-space: nowrap;
+}
+input.scale-slider {
+  display: block;
+  width: 100%;
+  margin: 12px 0 0;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: #8470c0;
+  cursor: pointer;
+}
+@media (max-width: 800px) {
+  .number-field > label {
+    font-size: 13px;
+  }
+  .number-step {
+    width: 32px;
+    min-width: 32px;
+  }
+  .field .number-value input {
+    font-size: 14px;
+  }
+  .proportion-summary strong {
+    font-size: 13px;
+  }
+  .proportion-summary small,
+  .proportion-summary .text-btn {
+    font-size: 11px;
+  }
+}
