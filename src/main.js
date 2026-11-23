@@ -1,5 +1,6 @@
 import "./style.css";
 import { createSheetPreview } from "./preview.js";
+import { hasArtwork } from "./render-geometry.js";
 import { icon } from "./icons.js";
 import {
   computeLayout,
@@ -378,7 +379,7 @@ function sourcePanel(b, key, label) {
   const s = b.cover[key],
     asset = s.type === "asset" ? state.assets[s.assetId] : null;
   const mode = s.type === "asset" ? "asset" : s.type;
-  return `<div class="cover-source" role="group" aria-label="${esc(label)}"><div class="source-label">${label}</div>${selectField(
+  return `<div class="cover-source" role="group" aria-label="${esc(label)}">${selectField(
     "Source",
     `cover.${key}.type`,
     mode,
@@ -394,6 +395,26 @@ function sourcePanel(b, key, label) {
 function coverPanel(b) {
   const c = b.cover,
     cw = b.width + c.overhang * 2;
+  if (!c.enabled) return "";
+  const separate = c.mode === "separate";
+  const generatedWrap = c.mode !== "wrap" || !hasArtwork(c.wrap);
+  const generatedFront = generatedWrap && (!separate || !hasArtwork(c.front));
+  const generatedSpine =
+    generatedWrap && c.spine > 0 && (!separate || !hasArtwork(c.spineSource));
+  const generatedBack = generatedWrap && (!separate || !hasArtwork(c.back));
+  const spineText = `${selectField(
+    "Spine text",
+    "cover.spineMode",
+    c.spineMode,
+    [
+      ["title", "Book title"],
+      ["custom", "Custom text"],
+      ["none", "No text"],
+    ],
+    "book",
+    true,
+  )}${c.spineMode === "custom" ? `<label class="field"><span>Custom spine text</span><input type="text" maxlength="160" data-key="cover.spineText" data-target="book" value="${esc(c.spineText)}"></label>` : ""}`;
+  const backText = `<label class="field"><span>Back cover text</span><textarea aria-label="Back cover text" rows="4" maxlength="500" data-key="cover.backText" data-target="book">${esc(c.backText)}</textarea></label><p class="field-help">Leave blank for no text.</p>`;
   return (
     (!b.includePages
       ? section(
@@ -402,50 +423,45 @@ function coverPanel(b) {
         )
       : "") +
     section(
-      "Cover",
-      `${
-        c.enabled
-          ? `<div class="cover-schematic"><div style="background:${esc(c.color)};color:${esc(c.ink)}"><span>BACK</span><i></i><span>FRONT</span></div><small>${(cw * 2 + c.spine).toFixed(1)} x ${(b.height + c.overhang * 2).toFixed(1)} mm unfolded</small></div>${selectField(
-              "Cover artwork",
-              "cover.mode",
-              c.mode,
-              [
-                ["generated", "Design a cover here"],
-                ["wrap", "One full-wrap file"],
-                ["separate", "Separate cover pieces"],
-              ],
-              "book",
-              true,
-            )}<div class="field-pair">${numberField("Spine width", "cover.spine", c.spine, 0, 30, 0.1)}${numberField("Overhang", "cover.overhang", c.overhang, 0, 10, 0.1)}</div><p class="field-help">Overhang adds to each edge of the front and back covers.</p>`
-          : ""
-      }`,
+      "Cover layout",
+      `<div class="cover-schematic"><div style="background:${esc(c.color)};color:${esc(c.ink)}"><span>BACK</span><i></i><span>FRONT</span></div><small>${(cw * 2 + c.spine).toFixed(1)} x ${(b.height + c.overhang * 2).toFixed(1)} mm unfolded</small></div>${selectField(
+        "Cover artwork",
+        "cover.mode",
+        c.mode,
+        [
+          ["generated", "Design a cover here"],
+          ["wrap", "One full-wrap file"],
+          ["separate", "Separate cover pieces"],
+        ],
+        "book",
+        true,
+      )}<div class="field-pair">${numberField("Spine width", "cover.spine", c.spine, 0, 30, 0.1)}${numberField("Overhang", "cover.overhang", c.overhang, 0, 10, 0.1)}</div><p class="field-help">Overhang adds to each edge of the front and back covers.</p>`,
     ) +
-    (c.enabled
-      ? (c.mode === "wrap"
-          ? section(
-              "Full-wrap artwork",
-              `${sourcePanel(b, "wrap", "Back + spine + front in one file")}<p class="field-help">Artwork fits inside the wrap without stretching or cropping. Use the dimensions above when preparing your file.</p>`,
-            )
-          : c.mode === "separate"
-            ? section(
-                "Your cover pieces",
-                `${sourcePanel(b, "front", "Front cover")}${sourcePanel(b, "spineSource", "Spine")}${sourcePanel(b, "back", "Back cover")}`,
-              )
-            : "") +
-        section(
-          c.mode === "generated" ? "Design" : "Generated design",
-          `<div class="field-pair"><label class="field"><span>Cover color</span><div class="color-field"><input type="color" data-key="cover.color" data-target="book" value="${esc(c.color)}"><span>${esc(c.color)}</span></div></label><label class="field"><span>Lettering</span><div class="color-field"><input type="color" data-key="cover.ink" data-target="book" value="${esc(c.ink)}"><span>${esc(c.ink)}</span></div></label></div><div class="swatches">${["#354c45", "#5146b9", "#87464f", "#263951", "#b07335", "#342e3a"].map((col) => `<button class="swatch ${c.color === col ? "active" : ""}" style="--swatch:${col}" data-action="cover-color" data-color="${col}" aria-label="Use cover color ${col}"></button>`).join("")}</div>${selectField(
-            "Spine text",
-            "cover.spineMode",
-            c.spineMode,
-            [
-              ["title", "Book title"],
-              ["custom", "Custom text"],
-              ["none", "No text"],
-            ],
-            "book",
-            true,
-          )}${c.spineMode === "custom" ? `<label class="field"><span>Custom spine text</span><input type="text" maxlength="160" data-key="cover.spineText" data-target="book" value="${esc(c.spineText)}"></label>` : ""}<label class="field"><span>Back cover text</span><textarea aria-label="Back cover text" rows="4" maxlength="500" data-key="cover.backText" data-target="book">${esc(c.backText)}</textarea></label><p class="field-help">Generated back only. Leave blank for no text.</p>${toggle("Soft gradient", "", "cover.gradient", c.gradient, "book", false)}<p class="field-help">Text and colors apply to generated pieces only.</p>`,
+    (c.mode === "wrap"
+      ? section(
+          "Full-wrap artwork",
+          sourcePanel(b, "wrap", "Full-wrap artwork"),
+        )
+      : "") +
+    (separate
+      ? section("Front cover", sourcePanel(b, "front", "Front cover"))
+      : "") +
+    (generatedWrap && c.spine > 0
+      ? section(
+          "Spine",
+          `${separate ? sourcePanel(b, "spineSource", "Spine artwork") : ""}${generatedSpine ? spineText : ""}`,
+        )
+      : "") +
+    (generatedWrap
+      ? section(
+          "Back cover",
+          `${separate ? sourcePanel(b, "back", "Back cover artwork") : ""}${generatedBack ? backText : ""}`,
+        )
+      : "") +
+    (generatedFront || generatedSpine || generatedBack
+      ? section(
+          "Colors",
+          `<div class="field-pair"><label class="field"><span>Cover color</span><div class="color-field"><input type="color" data-key="cover.color" data-target="book" value="${esc(c.color)}"><span>${esc(c.color)}</span></div></label><label class="field"><span>Lettering</span><div class="color-field"><input type="color" data-key="cover.ink" data-target="book" value="${esc(c.ink)}"><span>${esc(c.ink)}</span></div></label></div><div class="swatches">${["#354c45", "#5146b9", "#87464f", "#263951", "#b07335", "#342e3a"].map((col) => `<button class="swatch ${c.color === col ? "active" : ""}" style="--swatch:${col}" data-action="cover-color" data-color="${col}" aria-label="Use cover color ${col}"></button>`).join("")}</div>${toggle("Soft gradient", "", "cover.gradient", c.gradient, "book", false)}<p class="field-help">Applies to generated pieces.</p>`,
         )
       : "")
   );
@@ -876,7 +892,16 @@ function handleField(field, isInput = false) {
     );
   } else {
     if (key === "title") value = value.trim() || "Untitled book";
-    editBook(key, value, field.hasAttribute("data-rebuild"));
+    const spineVisibilityChanged =
+      key === "cover.spine" && bookNow().cover.spine > 0 !== value > 0;
+    const restoreSpineFocus =
+      spineVisibilityChanged && document.activeElement === field;
+    editBook(
+      key,
+      value,
+      field.hasAttribute("data-rebuild") || spineVisibilityChanged,
+    );
+    if (restoreSpineFocus) $('input[data-key="cover.spine"]')?.focus();
     if (key === "cover.color" || key === "cover.ink") {
       const label = field.parentElement.querySelector("span");
       if (label) label.textContent = value;

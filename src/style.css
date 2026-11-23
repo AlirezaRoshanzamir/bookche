@@ -2727,3 +2727,40 @@ input.scale-slider {
   width: 14px;
   height: 14px;
 }
+
+/* Section boundaries stay visible without relying on font weight. */
+.inspector-content {
+  background: #f5f4f8;
+  padding: 0 14px 14px;
+}
+.inspector-content .settings-section {
+  margin: 14px 0;
+  padding: 14px;
+  border: 1px solid #dcd7e5;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 2px #30234306;
+}
+.inspector-content .settings-section:last-child {
+  padding-bottom: 14px;
+  margin-bottom: 0;
+  border-bottom: 1px solid #dcd7e5;
+}
+.inspector-content .settings-section > h3 {
+  margin: -14px -14px 14px;
+  padding: 12px 14px;
+  border-radius: 9px 9px 0 0;
+  border-bottom: 1px solid #dcd7e5;
+  background: #eeebf4;
+  color: #3b304b;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.settings-section > .cover-source {
+  padding: 0;
+  border: 0;
+}
+.settings-section > .cover-source + .field {
+  margin-top: 18px;
+}
