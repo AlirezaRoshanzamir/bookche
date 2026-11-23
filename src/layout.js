@@ -86,6 +86,8 @@ export function defaultSettings() {
     backOffsetX: 0,
     backOffsetY: 0,
     registration: false,
+    cuttingGrid: true,
+    gridSpacing: 5,
     output: "all",
   };
 }

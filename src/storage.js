@@ -124,6 +124,8 @@ export function normalizeProject(data, encoded = false) {
       backOffsetX: finite(s.backOffsetX, -20, 20, 0),
       backOffsetY: finite(s.backOffsetY, -20, 20, 0),
       registration: !!s.registration,
+      cuttingGrid: s.cuttingGrid !== false,
+      gridSpacing: finite(s.gridSpacing, 2, 20, 5),
     };
   const ids = new Set();
   const books = data.books.map((item) => {

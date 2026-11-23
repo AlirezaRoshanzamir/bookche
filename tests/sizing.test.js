@@ -278,3 +278,27 @@ test("generated spine lettering can follow the title, use custom text, or be bla
   delete b.cover.spineText;
   assert.equal(normalizeProject(project).books[0].cover.spineMode, "title");
 });
+
+test("cutting-grid preferences survive project saves and use safe defaults", () => {
+  const project = {
+    version: 1,
+    books: [book()],
+    assets: {
+      asset: {
+        id: "asset",
+        mime: "application/pdf",
+        bytes: new Uint8Array([1]),
+        pageCount: 2,
+        pageSizes: [source, source],
+      },
+    },
+    settings: { cuttingGrid: false, gridSpacing: 8 },
+  };
+  const saved = normalizeProject(JSON.parse(encodeProject(project)), true);
+  assert.equal(saved.settings.cuttingGrid, false);
+  assert.equal(saved.settings.gridSpacing, 8);
+  project.settings = { gridSpacing: -1 };
+  const old = normalizeProject(project);
+  assert.equal(old.settings.cuttingGrid, true);
+  assert.equal(old.settings.gridSpacing, 5);
+});

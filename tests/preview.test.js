@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PreviewCache } from "../src/preview-cache.js";
 import {
+  cuttingGridPoints,
   fitArtwork,
   pixelBox,
   fitInside,
@@ -155,4 +156,94 @@ test("fractional preview page sizes share pixel edges without seams", () => {
     const spaced = pixelBox(10 + width + 2, 10, width, height, scale);
     assert.ok(spaced.x > page.x + page.width);
   }
+});
+
+test("cutting grid spans the sheet but keeps dots off the artwork", () => {
+  const settings = { cuttingGrid: true, gridSpacing: 5, mode: "single" };
+  const empty = cuttingGridPoints(
+    20,
+    20,
+    { side: "front", pieces: [] },
+    settings,
+  );
+  assert.equal(empty.length, 9);
+  const points = cuttingGridPoints(
+    20,
+    20,
+    { side: "front", pieces: [{ x: 5, y: 5, width: 5, height: 5 }] },
+    settings,
+  );
+  assert.equal(points.length, 5);
+  assert.ok(
+    points.every(
+      (p) => !(p.x >= 4.9 && p.x <= 10.1 && p.y >= 4.9 && p.y <= 10.1),
+    ),
+  );
+  assert.deepEqual(
+    cuttingGridPoints(
+      20,
+      20,
+      { side: "front", pieces: [] },
+      { ...settings, cuttingGrid: false },
+    ),
+    [],
+  );
+});
+
+test("duplex grid follows the same physical flip and offsets as the pages", () => {
+  for (const [width, height] of [
+    [23, 31],
+    [31, 23],
+  ])
+    for (const flip of ["long", "short"]) {
+      const settings = {
+        cuttingGrid: true,
+        gridSpacing: 5,
+        mode: "duplex",
+        flip,
+        backOffsetX: 0.5,
+        backOffsetY: -0.25,
+      };
+      const mirrorX = flip === "long" ? height >= width : height < width;
+      const piece = { x: 6, y: 8, width: 4, height: 6 };
+      const backPiece = {
+        ...piece,
+        x: (mirrorX ? width - piece.x - piece.width : piece.x) + 0.5,
+        y: (mirrorX ? piece.y : height - piece.y - piece.height) - 0.25,
+      };
+      const front = cuttingGridPoints(
+        width,
+        height,
+        { side: "front", pieces: [piece] },
+        settings,
+      );
+      const back = cuttingGridPoints(
+        width,
+        height,
+        { side: "back", pieces: [backPiece] },
+        settings,
+      );
+      const key = (p) => `${p.x},${p.y}`;
+      const expected = front.map((p) => ({
+        x: (mirrorX ? width - p.x : p.x) + 0.5,
+        y: (mirrorX ? p.y : height - p.y) - 0.25,
+      }));
+      assert.deepEqual(back.map(key).sort(), expected.map(key).sort());
+    }
+});
+
+test("cutting grid leaves the blank reverse of a cover or unpaired page unmarked", () => {
+  const points = cuttingGridPoints(
+    20,
+    20,
+    { side: "back", pieces: [] },
+    { cuttingGrid: true, gridSpacing: 5, mode: "duplex", flip: "long" },
+    [{ x: 5, y: 5, width: 5, height: 5 }],
+  );
+  assert.equal(points.length, 5);
+  assert.ok(
+    points.every(
+      (p) => !(p.x >= 9.9 && p.x <= 15.1 && p.y >= 4.9 && p.y <= 10.1),
+    ),
+  );
 });

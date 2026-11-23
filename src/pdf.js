@@ -9,6 +9,9 @@ import {
   hasArtwork,
   cutGuides,
   registrationGuides,
+  cuttingGridPoints,
+  GRID_DOT_RADIUS,
+  GRID_DOT_COLOR,
 } from "./render-geometry.js";
 import { displayedPageSize } from "./sizing.js";
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
@@ -317,6 +320,20 @@ export async function buildPdf(
   for (let i = 0; i < faces.length; i++) {
     const face = faces[i],
       page = doc.addPage([mm(layout.width), mm(layout.height)]);
+    for (const dot of cuttingGridPoints(
+      layout.width,
+      layout.height,
+      face,
+      settings,
+      layout.sheets[face.sheet]?.front,
+    )) {
+      page.drawCircle({
+        x: mm(dot.x),
+        y: mm(layout.height - dot.y),
+        size: mm(GRID_DOT_RADIUS),
+        color: color(GRID_DOT_COLOR),
+      });
+    }
     for (const piece of face.pieces) {
       const book = bookMap.get(piece.bookId),
         x = mm(piece.x),

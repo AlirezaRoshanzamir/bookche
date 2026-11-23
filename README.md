@@ -94,3 +94,5 @@ Edit **Cover > Back cover text** to replace the generated back-cover message. Li
 Book cards contain the editable title, duplicate/remove buttons, and Pages/Cover checkboxes. Unchecked parts have disabled settings tabs. For generated covers, **Spine text** can use the book title, custom text, or no text. Edition lettering is no longer printed.
 
 Touching pages share pixel boundaries in the preview to avoid thumbnail-rounding seams. Export keeps exact millimeter positions; PDF viewers may still show hairlines at some zoom levels because of edge smoothing, even where page boundaries touch. Margins already in the source PDF are preserved.
+
+Removing a book asks for confirmation, with Undo available after removal. The faint dotted **Cutting grid** covers empty sheet areas in preview and print/PDF without marking artwork. Turn it off or change its spacing in **Sheet setup > Sheet guides**. Grid positions follow the same duplex flip and back offsets as the pages.

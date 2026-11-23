@@ -83,7 +83,7 @@ app.innerHTML = `
     <div class="sheet-summary" id="sheet-summary"></div>
     <div class="preview-toolbar"><div class="preview-title">${icon("eye")} <strong>Preview</strong></div><div class="zoom-controls"><button class="icon-btn" data-action="zoom-out" aria-label="Zoom out">${icon("minus")}</button><button class="text-btn" data-action="zoom-reset" id="zoom-label">Fit</button><button class="icon-btn" data-action="zoom-in" aria-label="Zoom in">${icon("plus")}</button></div></div>
     <div id="layout-messages" class="layout-messages" aria-live="polite"></div>
-    <div class="preview-stage" id="preview-stage"><div class="sheet-scene" id="sheet-scene"><div class="dimension horizontal" id="paper-width"></div><div class="dimension vertical" id="paper-height"></div><div class="paper" id="paper"><canvas id="preview-canvas" aria-label="Print sheet preview"></canvas><div id="piece-overlays"></div><div class="preview-loading" id="preview-loading"><span class="spinner"></span><span>Loading preview...</span></div></div></div><div class="empty-preview" id="empty-preview" hidden><span class="empty-icon">${icon("book")}</span><h3>Add a book</h3><p>Add a PDF or try the sample.</p><button class="btn primary" data-action="add-books">${icon("plus")} Add a PDF</button><button class="text-btn" data-action="add-sample">Try the sample book</button></div></div>
+    <div class="preview-stage" id="preview-stage"><div class="sheet-scene" id="sheet-scene"><div class="dimension horizontal" id="paper-width"></div><div class="dimension vertical"><span id="paper-height"></span></div><div class="paper" id="paper"><canvas id="preview-canvas" aria-label="Print sheet preview"></canvas><div id="piece-overlays"></div><div class="preview-loading" id="preview-loading"><span class="spinner"></span><span>Loading preview...</span></div></div></div><div class="empty-preview" id="empty-preview" hidden><span class="empty-icon">${icon("book")}</span><h3>Add a book</h3><p>Add a PDF or try the sample.</p><button class="btn primary" data-action="add-books">${icon("plus")} Add a PDF</button><button class="text-btn" data-action="add-sample">Try the sample book</button></div></div>
     <div class="preview-pagination"><span id="preview-info"></span><div class="page-navigation"><button class="icon-btn" data-action="prev-face" aria-label="Previous sheet side">${icon("left")}</button><span id="face-label">Sheet 1</span><button class="icon-btn" data-action="next-face" aria-label="Next sheet side">${icon("chevron")}</button></div><button class="text-btn" data-action="all-sheets">${icon("grid")} All sheets</button></div>
     <div class="print-bar"><div class="print-total"><span class="print-icon">${icon("file")}</span><div><strong id="output-total">No sheets</strong><small id="output-detail">Add a PDF to begin.</small></div></div><div class="print-actions"><button class="btn" data-action="print" id="print-btn">${icon("print")} Print</button><button class="btn primary" data-action="export" id="export-btn">${icon("download")} Export PDF</button></div></div>
     <div class="scale-note">${icon("info")} Print at <strong>100% / Actual size</strong>. Turn off page scaling and headers.</div>
@@ -574,7 +574,7 @@ function renderSheetInspector() {
             `<p class="field-help">For manual duplex, test your tray's reinsertion order with one sheet first. Blank cover backs are kept.</p>`
           : ""
       }`,
-    )}${s.mode === "duplex" ? section("Back alignment", `<div class="field-pair">${numberField("Back shift X", "backOffsetX", s.backOffsetX, -20, 20, 0.1, "settings")}${numberField("Back shift Y", "backOffsetY", s.backOffsetY, -20, 20, 0.1, "settings")}</div><p class="field-help">Positive X moves right; positive Y moves down, as viewed on the back sheet. These compensate for printer alignment.</p>`) : ""}${section("Calibration", `${toggle("Registration crosses", "Small crosses 5 mm from sheet corners.", "registration", s.registration, "settings", false)}<button class="btn full" data-action="calibration">${icon("download")} Calibration PDF</button><p class="field-help">Includes a 20 mm square and a ruler. Duplex calibration includes a matching back.</p>`)}</div>`;
+    )}${s.mode === "duplex" ? section("Back alignment", `<div class="field-pair">${numberField("Back shift X", "backOffsetX", s.backOffsetX, -20, 20, 0.1, "settings")}${numberField("Back shift Y", "backOffsetY", s.backOffsetY, -20, 20, 0.1, "settings")}</div><p class="field-help">Positive X moves right; positive Y moves down, as viewed on the back sheet. These compensate for printer alignment.</p>`) : ""}${section("Sheet guides", `${toggle("Cutting grid", "Faint dots in empty areas. Included in print/PDF.", "cuttingGrid", s.cuttingGrid, "settings")}${s.cuttingGrid ? numberField("Grid spacing", "gridSpacing", s.gridSpacing, 2, 20, 1, "settings") : ""}`)}${section("Calibration", `${toggle("Registration crosses", "Small crosses 5 mm from sheet corners.", "registration", s.registration, "settings", false)}<button class="btn full" data-action="calibration">${icon("download")} Calibration PDF</button><p class="field-help">Includes a 20 mm square and a ruler. Duplex calibration includes a matching back.</p>`)}</div>`;
 }
 function activeProject() {
   const ids = new Set(state.books.map((b) => b.assetId));
@@ -1202,7 +1202,12 @@ window.addEventListener("afterprint", () => {
 });
 function openModal(html, wide = false) {
   $("#modal-content").innerHTML =
-    `<div class="modal-top"><span class="eyebrow">BOOKCHE / FIELD NOTES</span><button class="icon-btn" data-action="close-modal" aria-label="Close dialog">${icon("close")}</button></div>${html}`;
+    `<div class="modal-top"><span class="eyebrow">BOOKCHE</span><button class="icon-btn" data-action="close-modal" aria-label="Close dialog">${icon("close")}</button></div>${html}`;
+  const heading = $("#modal-content h2");
+  if (heading) {
+    heading.id = "modal-title";
+    $("#modal").setAttribute("aria-labelledby", "modal-title");
+  }
   $("#modal").classList.toggle("wide", wide);
   $("#modal").showModal();
 }
@@ -1405,6 +1410,15 @@ app.addEventListener("click", async (event) => {
   }
   if (action === "delete-book") {
     const b = state.books.find((b) => b.id === button.dataset.id);
+    if (!b) return;
+    openModal(
+      `<h2>Remove book?</h2><p class="modal-intro">Remove <strong>${esc(b.title)}</strong> from this project?</p><div class="dialog-actions"><button class="btn" data-action="close-modal" autofocus>Cancel</button><button class="btn danger" data-action="confirm-delete-book" data-id="${esc(b.id)}">Remove book</button></div>`,
+    );
+    return;
+  }
+  if (action === "confirm-delete-book") {
+    const b = state.books.find((b) => b.id === button.dataset.id);
+    $("#modal").close();
     if (!b) return;
     undoRemove = { book: b, index: state.books.indexOf(b) };
     state.books = state.books.filter((item) => item.id !== b.id);

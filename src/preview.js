@@ -7,6 +7,9 @@ import {
   coverPanels,
   cutGuides,
   registrationGuides,
+  cuttingGridPoints,
+  GRID_DOT_RADIUS,
+  GRID_DOT_COLOR,
 } from "./render-geometry.js";
 import { makeCoverLettering, spineTextFor } from "./cover.js";
 
@@ -303,13 +306,33 @@ export function createSheetPreview() {
             guide(ctx, shape);
         });
       cache.show(resources.keys());
+      // Cache the sheet background while page images load progressively.
+      const background = document.createElement("canvas");
+      background.width = Math.ceil(layout.width * pixelsPerMm);
+      background.height = Math.ceil(layout.height * pixelsPerMm);
+      const bg = background.getContext("2d");
+      bg.fillStyle = "white";
+      bg.fillRect(0, 0, background.width, background.height);
+      bg.scale(pixelsPerMm, pixelsPerMm);
+      bg.fillStyle = GRID_DOT_COLOR;
+      bg.beginPath();
+      for (const dot of cuttingGridPoints(
+        layout.width,
+        layout.height,
+        face,
+        settings,
+        layout.sheets[face.sheet]?.front,
+      )) {
+        bg.moveTo(dot.x + GRID_DOT_RADIUS, dot.y);
+        bg.arc(dot.x, dot.y, GRID_DOT_RADIUS, 0, Math.PI * 2);
+      }
+      bg.fill();
       const paint = () => {
         if (serial !== generation) return;
         canvas.width = Math.ceil(layout.width * pixelsPerMm);
         canvas.height = Math.ceil(layout.height * pixelsPerMm);
         const ctx = canvas.getContext("2d");
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(background, 0, 0);
         ctx.scale(pixelsPerMm, pixelsPerMm);
         for (const draw of commands) draw(ctx);
       };

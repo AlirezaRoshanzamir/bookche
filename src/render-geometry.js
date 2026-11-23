@@ -150,3 +150,57 @@ export function pixelBox(x, y, width, height, scale) {
     height: Math.round((y + height) * scale) - top,
   };
 }
+
+export const GRID_DOT_RADIUS = 0.1;
+export const GRID_DOT_COLOR = "#d0d0d0";
+export function cuttingGridPoints(width, height, face, settings, frontPieces) {
+  if (settings.cuttingGrid === false) return [];
+  const step = Math.max(2, Math.min(20, Number(settings.gridSpacing) || 5));
+  const back = settings.mode === "duplex" && face.side === "back";
+  const mirrorX = settings.flip === "long" ? height >= width : height < width;
+  const axis = (extent, mirror, offset) => {
+    const values = [];
+    for (let n = step; n < extent; n += step) {
+      const value = (mirror ? extent - n : n) + offset;
+      if (value > GRID_DOT_RADIUS && value < extent - GRID_DOT_RADIUS)
+        values.push(value);
+    }
+    return values.sort((a, b) => a - b);
+  };
+  const xs = axis(
+    width,
+    back && mirrorX,
+    back ? Number(settings.backOffsetX) || 0 : 0,
+  );
+  const ys = axis(
+    height,
+    back && !mirrorX,
+    back ? Number(settings.backOffsetY) || 0 : 0,
+  );
+  const masks =
+    back && frontPieces
+      ? frontPieces.map((p) => ({
+          ...p,
+          x:
+            (mirrorX ? width - p.x - p.width : p.x) +
+            (Number(settings.backOffsetX) || 0),
+          y:
+            (mirrorX ? p.y : height - p.y - p.height) +
+            (Number(settings.backOffsetY) || 0),
+        }))
+      : face.pieces;
+  const points = [],
+    r = GRID_DOT_RADIUS;
+  for (const y of ys) {
+    const intervals = masks
+      .filter((p) => y >= p.y - r && y <= p.y + p.height + r)
+      .map((p) => [p.x - r, p.x + p.width + r])
+      .sort((a, b) => a[0] - b[0]);
+    let i = 0;
+    for (const x of xs) {
+      while (i < intervals.length && intervals[i][1] < x) i++;
+      if (i === intervals.length || x < intervals[i][0]) points.push({ x, y });
+    }
+  }
+  return points;
+}
