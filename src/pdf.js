@@ -4,7 +4,7 @@ import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { mm, outputFaces } from "./layout.js";
 import { makeCoverLettering, spineTextFor } from "./cover.js";
 import {
-  fitInside,
+  fitArtwork,
   coverPanels,
   hasArtwork,
   cutGuides,
@@ -151,7 +151,17 @@ export async function buildPdf(
     embedded = new Map(),
     textImages = new Map();
   const bookMap = new Map(books.map((b) => [b.id, b]));
-  async function source(source, book, page, x, y, w, h, extraRotation = 0) {
+  async function source(
+    source,
+    book,
+    page,
+    x,
+    y,
+    w,
+    h,
+    extraRotation = 0,
+    stretch = false,
+  ) {
     if (
       !source ||
       source.type === "generated" ||
@@ -196,10 +206,9 @@ export async function buildPdf(
           360;
       const sw = rotation % 180 ? image.height : image.width,
         sh = rotation % 180 ? image.width : image.height;
-      const fit = fitInside(sw, sh, w, h),
-        scale = fit.scale,
-        dw = image.width * scale,
-        dh = image.height * scale;
+      const fit = fitArtwork(sw, sh, w, h, stretch),
+        dw = rotation % 180 ? fit.height : fit.width,
+        dh = rotation % 180 ? fit.width : fit.height;
       let dx = x + fit.x,
         dy = y + fit.y;
       if (rotation === 90) dy += dw;
@@ -223,19 +232,18 @@ export async function buildPdf(
             : await doc.embedJpg(asset.bytes),
         );
       const image = embedded.get(id),
-        fit = fitInside(image.width, image.height, w, h),
-        scale = fit.scale;
+        fit = fitArtwork(image.width, image.height, w, h, stretch);
       page.drawImage(image, {
         x: x + fit.x,
         y: y + fit.y,
-        width: image.width * scale,
-        height: image.height * scale,
+        width: fit.width,
+        height: fit.height,
       });
     }
     return true;
   }
   async function coverPanel(page, book, role, x, y, w, h, input) {
-    if (await source(input, book, page, x, y, w, h)) return;
+    if (await source(input, book, page, x, y, w, h, 0, true)) return;
     const c = book.cover;
     page.drawRectangle({ x, y, width: w, height: h, color: color(c.color) });
     if (c.gradient)
@@ -330,7 +338,7 @@ export async function buildPdf(
       } else {
         const c = book.cover;
         if (c.mode === "wrap" && hasArtwork(c.wrap))
-          await source(c.wrap, book, page, x, y, w, h);
+          await source(c.wrap, book, page, x, y, w, h, 0, true);
         else
           for (const panel of coverPanels(book)) {
             await coverPanel(

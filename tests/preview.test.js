@@ -1,7 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PreviewCache } from "../src/preview-cache.js";
-import { fitInside, cutGuides, coverPanels } from "../src/render-geometry.js";
+import {
+  fitArtwork,
+  fitInside,
+  cutGuides,
+  coverPanels,
+} from "../src/render-geometry.js";
 import { makeBook } from "../src/layout.js";
 const tick = () => new Promise((resolve) => setImmediate(resolve));
 test("visible pages share in-flight work and cached images across edits", async () => {
@@ -111,4 +116,25 @@ test("cutting guides follow the content corner on rotated backs and selected pag
     panels.at(-1).x + panels.at(-1).width,
     2 * (book.width + book.cover.overhang * 2) + book.cover.spine,
   );
+});
+
+test("cover artwork fills its box while body pages preserve their proportions", () => {
+  for (const [w, h] of [
+    [100, 200],
+    [200, 100],
+  ]) {
+    assert.deepEqual(fitArtwork(w, h, 27, 38, true), {
+      x: 0,
+      y: 0,
+      width: 27,
+      height: 38,
+    });
+    assert.deepEqual(fitArtwork(w, h, 27, 38), fitInside(w, h, 27, 38));
+  }
+  assert.deepEqual(fitArtwork(100, 200, 57, 38, true), {
+    x: 0,
+    y: 0,
+    width: 57,
+    height: 38,
+  });
 });

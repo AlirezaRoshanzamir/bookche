@@ -11,6 +11,18 @@ export function fitInside(sourceWidth, sourceHeight, width, height) {
   };
 }
 
+export function fitArtwork(
+  sourceWidth,
+  sourceHeight,
+  width,
+  height,
+  stretch = false,
+) {
+  return stretch
+    ? { x: 0, y: 0, width, height }
+    : fitInside(sourceWidth, sourceHeight, width, height);
+}
+
 export function hasArtwork(source) {
   return (
     !!source &&

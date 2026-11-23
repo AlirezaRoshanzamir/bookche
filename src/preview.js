@@ -1,7 +1,7 @@
 import * as pdfjs from "pdfjs-dist";
 import { PreviewCache } from "./preview-cache.js";
 import {
-  fitInside,
+  fitArtwork,
   hasArtwork,
   coverPanels,
   cutGuides,
@@ -46,7 +46,15 @@ export function createSheetPreview() {
       input.cleanup();
     }
   });
-  function resource(source, book, width, height, pixelsPerMm, assets) {
+  function resource(
+    source,
+    book,
+    width,
+    height,
+    pixelsPerMm,
+    assets,
+    stretch = false,
+  ) {
     const asset =
       assets[source.type === "book" ? book.assetId : source.assetId];
     if (!asset)
@@ -58,10 +66,14 @@ export function createSheetPreview() {
     if (page < 1 || page > asset.pageCount)
       throw new Error(`${book.title}: a page is outside the PDF's page range.`);
     const dimensions = asset.pageSizes?.[page - 1];
-    const fit = dimensions
-      ? fitInside(dimensions.width, dimensions.height, width, height)
-      : { width, height };
-    const needed = Math.max(fit.width, fit.height) * pixelsPerMm;
+    const needed = dimensions
+      ? (stretch ? Math.max : Math.min)(
+          width / dimensions.width,
+          height / dimensions.height,
+        ) *
+        Math.max(dimensions.width, dimensions.height) *
+        pixelsPerMm
+      : Math.max(width, height) * pixelsPerMm;
     const size =
       asset.mime === "application/pdf"
         ? [64, 128, 256, 512, 1024, 2048].find((n) => n >= needed) || 2048
@@ -167,15 +179,38 @@ export function createSheetPreview() {
       const commands = [],
         resources = new Map(),
         bookMap = new Map(books.map((b) => [b.id, b]));
-      const artwork = (source, book, x, y, width, height, rotation = 0) => {
-        const res = resource(source, book, width, height, pixelsPerMm, assets);
+      const artwork = (
+        source,
+        book,
+        x,
+        y,
+        width,
+        height,
+        rotation = 0,
+        stretch = false,
+      ) => {
+        const res = resource(
+          source,
+          book,
+          width,
+          height,
+          pixelsPerMm,
+          assets,
+          stretch,
+        );
         resources.set(res.key, res);
         commands.push((ctx) => {
           const image = res.image();
           ctx.save();
           ctx.translate(x, y);
           if (image) {
-            const fit = fitInside(image.width, image.height, width, height);
+            const fit = fitArtwork(
+              image.width,
+              image.height,
+              width,
+              height,
+              stretch,
+            );
             if (rotation === 180) {
               ctx.translate(width, height);
               ctx.rotate(Math.PI);
@@ -207,12 +242,21 @@ export function createSheetPreview() {
             piece.rotation,
           );
         } else if (book.cover.mode === "wrap" && hasArtwork(book.cover.wrap))
-          artwork(book.cover.wrap, book, x, y, width, height);
+          artwork(book.cover.wrap, book, x, y, width, height, 0, true);
         else
           for (const panel of coverPanels(book)) {
             const source = book.cover.mode === "separate" ? panel.source : null;
             if (hasArtwork(source))
-              artwork(source, book, x + panel.x, y, panel.width, height);
+              artwork(
+                source,
+                book,
+                x + panel.x,
+                y,
+                panel.width,
+                height,
+                0,
+                true,
+              );
             else
               commands.push((ctx) => {
                 ctx.save();
