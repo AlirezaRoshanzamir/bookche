@@ -49,8 +49,7 @@ export function makeBook(id, title, assetId, pageCount) {
     lockAspectRatio: true,
     ranges: "",
     includePages: true,
-    startOnNewRow: true,
-    pagesStartOnNewRow: true,
+    pagesStartOnNewRow: false,
     rowGap: 3,
     columnGap: 2,
     border: false,
@@ -201,7 +200,6 @@ export function computeLayout(books, settings) {
       );
       continue;
     }
-    let startOnNewRow = book.startOnNewRow !== false;
     if (book.cover.enabled) {
       const cw = book.width + book.cover.overhang * 2,
         ch = book.height + book.cover.overhang * 2;
@@ -216,9 +214,8 @@ export function computeLayout(books, settings) {
         null,
         3,
         book.rowGap,
-        startOnNewRow || book.cover.startOnNewRow === true,
+        book.cover.startOnNewRow === true,
       );
-      startOnNewRow = false;
     }
     if (book.includePages && book.marks !== "none" && book.markPages === "custom") {
       try {
@@ -248,7 +245,7 @@ export function computeLayout(books, settings) {
         duplex && pages[i + 1] ? { ...base, page: pages[i + 1] } : null,
         duplex ? book.columnGap : 0,
         book.rowGap,
-        i === 0 && (startOnNewRow || book.pagesStartOnNewRow !== false),
+        i === 0 && book.pagesStartOnNewRow === true,
       );
     }
     if (duplex && pages.length % 2)

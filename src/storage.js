@@ -154,8 +154,7 @@ export function normalizeProject(data, encoded = false) {
     // Existing projects keep their exact dimensions until the link is enabled.
     b.lockAspectRatio = item.lockAspectRatio === true;
     b.includePages = item.includePages !== false;
-    b.startOnNewRow = item.startOnNewRow !== false;
-    b.pagesStartOnNewRow = item.pagesStartOnNewRow !== false;
+    b.pagesStartOnNewRow = item.pagesStartOnNewRow === true;
     b.hidden = !!item.hidden;
     b.border = !!item.border;
     b.ranges = text(item.ranges, 3000);

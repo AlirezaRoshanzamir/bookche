@@ -2727,10 +2727,6 @@ input.scale-slider {
   width: 14px;
   height: 14px;
 }
-.book-card-bottom.book-row-setting {
-  padding-top: 0;
-  border-top: 0;
-}
 
 /* Section boundaries stay visible without relying on font weight. */
 .inspector-content {
@@ -2841,3 +2837,6 @@ input.scale-slider {
 .btn.danger:hover {
   background: #8e2e3d;
 }
+
+.book-card { cursor: pointer; }
+.book-title-input { cursor: text; }

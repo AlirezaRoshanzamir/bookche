@@ -233,7 +233,7 @@ test("books share rows of mixed heights and wrap below the tallest item", () => 
   const a = book(1), b = makeBook("second", "Second", "asset", 7);
   a.cover.enabled = b.cover.enabled = false;
   a.height = 60;
-  b.startOnNewRow = b.pagesStartOnNewRow = false;
+  b.pagesStartOnNewRow = false;
   b.rowGap = 7;
   const pieces = computeLayout([a, b], defaultSettings()).sheets[0].front;
   assert.equal(pieces[1].x, 35);
@@ -242,13 +242,12 @@ test("books share rows of mixed heights and wrap below the tallest item", () => 
   assert.equal(pieces[7].y, 77);
 });
 
-test("book, cover and page row starts each force a fresh row", () => {
-  for (const boundary of ["book", "cover", "pages"]) {
+test("cover and page row starts each force a fresh row", () => {
+  for (const boundary of ["cover", "pages"]) {
     const a = book(1), b = makeBook("second", "Second", "asset", 1);
     a.cover.enabled = false;
-    b.startOnNewRow = b.pagesStartOnNewRow = b.cover.startOnNewRow = false;
+    b.pagesStartOnNewRow = b.cover.startOnNewRow = false;
     b.cover.enabled = boundary === "cover";
-    if (boundary === "book") b.startOnNewRow = true;
     if (boundary === "cover") b.cover.startOnNewRow = true;
     if (boundary === "pages") b.pagesStartOnNewRow = true;
     const pieces = computeLayout([a, b], defaultSettings()).sheets[0].front;
@@ -260,7 +259,7 @@ test("book, cover and page row starts each force a fresh row", () => {
 test("shared rows preserve duplex pairing and blank cover backs", () => {
   const a = book(3), b = makeBook("second", "Second", "asset", 2);
   a.pagesStartOnNewRow = false;
-  b.startOnNewRow = b.pagesStartOnNewRow = false;
+  b.pagesStartOnNewRow = false;
   b.cover.enabled = false;
   for (const orientation of ["portrait", "landscape"]) {
     for (const flip of ["long", "short"]) {
@@ -285,7 +284,7 @@ test("shared rows move overflowing taller pieces to the next sheet", () => {
   a.cover.enabled = b.cover.enabled = false;
   a.height = 20;
   b.height = 60;
-  b.startOnNewRow = b.pagesStartOnNewRow = false;
+  b.pagesStartOnNewRow = false;
   const settings = { ...defaultSettings(), paper: "Custom", customWidth: 100, customHeight: 70 };
   // The taller item fits a new sheet, but not the remaining height on the current one.
   b.height = 45;
@@ -301,29 +300,29 @@ test("shared rows can have zero spacing", () => {
   const a = book(7), b = makeBook("second", "Second", "asset", 2);
   a.cover.enabled = b.cover.enabled = false;
   a.rowGap = b.rowGap = 0;
-  b.startOnNewRow = b.pagesStartOnNewRow = false;
+  b.pagesStartOnNewRow = false;
   const pieces = computeLayout([a, b], defaultSettings()).sheets[0].front;
   assert.equal(pieces[7].y, 45);
   assert.equal(pieces[8].x, 35);
 });
 
-test("row settings survive project loading and old projects keep separate rows", () => {
+test("row settings survive project loading and missing options default to shared rows", () => {
   const b = book(12);
-  b.startOnNewRow = b.pagesStartOnNewRow = false;
+  b.pagesStartOnNewRow = false;
   b.cover.startOnNewRow = true;
   const input = { version: 1, books: [b], assets: { asset: {
     bytes: new Uint8Array([1]), mime: "application/pdf", pageCount: 12,
   } } };
   let loaded = normalizeProject(input).books[0];
-  assert.equal(loaded.startOnNewRow, false);
+  assert.equal(loaded.startOnNewRow, undefined);
   assert.equal(loaded.pagesStartOnNewRow, false);
   assert.equal(loaded.cover.startOnNewRow, true);
   delete b.startOnNewRow;
   delete b.pagesStartOnNewRow;
   delete b.cover.startOnNewRow;
   loaded = normalizeProject(input).books[0];
-  assert.equal(loaded.startOnNewRow, true);
-  assert.equal(loaded.pagesStartOnNewRow, true);
+  assert.equal(loaded.startOnNewRow, undefined);
+  assert.equal(loaded.pagesStartOnNewRow, false);
   assert.equal(loaded.cover.startOnNewRow, false);
 });
 
@@ -334,7 +333,7 @@ test("books with both parts disabled do not break shared rows or validate unused
   empty.margin = 30;
   empty.markPages = "custom";
   empty.markRanges = "invalid";
-  b.startOnNewRow = b.pagesStartOnNewRow = false;
+  b.pagesStartOnNewRow = false;
   const layout = computeLayout([a, empty, b], defaultSettings());
   assert.deepEqual(layout.errors, []);
   assert.deepEqual(layout.sheets[0].front.map(p => [p.bookId, p.x, p.y]), [
@@ -357,19 +356,19 @@ test("cover-only books ignore body margins and custom page mark ranges", () => {
   assert.match(computeLayout([b], duplex()).errors.join(" "), /content margin/);
 });
 
-test("mixed-book feature combinations preserve bounds, reading order and duplex pairing (1536 layouts)", () => {
+test("mixed-book feature combinations preserve bounds, reading order and duplex pairing (768 layouts)", () => {
   let count = 0;
   for (const paper of ["A5", "A4", "A3", "Letter", "Legal", "Custom"])
     for (const orientation of ["portrait", "landscape"])
       for (const mode of ["single", "duplex"])
         for (const flip of ["long", "short"])
-          for (let flags = 0; flags < 8; flags++)
+          for (let flags = 0; flags < 4; flags++)
             for (let parts = 0; parts < 4; parts++) {
               const settings = { ...defaultSettings(), paper, orientation, mode, flip, customWidth: 120, customHeight: 100 };
               const books = Array.from({ length: 3 }, (_, i) => {
                 const b = makeBook(`b${i}`, `Book ${i}`, "asset", 13);
-                Object.assign(b, { width: 14 + i * 7, height: 21 + i * 9, rowGap: i, columnGap: i, ranges: "3-9, 1", startOnNewRow: !!(flags & 1), pagesStartOnNewRow: !!(flags & 2) });
-                b.cover.startOnNewRow = !!(flags & 4);
+                Object.assign(b, { width: 14 + i * 7, height: 21 + i * 9, rowGap: i, columnGap: i, ranges: "3-9, 1", pagesStartOnNewRow: !!(flags & 1) });
+                b.cover.startOnNewRow = !!(flags & 2);
                 if (i === 1) {
                   b.includePages = !!(parts & 1);
                   b.cover.enabled = !!(parts & 2);
@@ -408,7 +407,7 @@ test("mixed-book feature combinations preserve bounds, reading order and duplex 
               }
               count++;
             }
-  assert.equal(count, 1536);
+  assert.equal(count, 768);
 });
 
 test("cover PDF page selections load as whole page numbers", () => {
@@ -418,4 +417,13 @@ test("cover PDF page selections load as whole page numbers", () => {
     bytes: new Uint8Array([1]), mime: "application/pdf", pageCount: 12,
   } } });
   assert.equal(loaded.books[0].cover.front.page, 1);
+});
+
+test("new books continue covers and pages on the current row by default", () => {
+  const a = book(1), b = makeBook("next", "Next", "asset", 1);
+  assert.equal(a.startOnNewRow, undefined);
+  assert.equal(a.pagesStartOnNewRow, false);
+  assert.equal(a.cover.startOnNewRow, false);
+  const pieces = computeLayout([a, b], defaultSettings()).sheets[0].front;
+  assert.deepEqual(pieces.map(p => p.y), [10, 10, 10, 10]);
 });

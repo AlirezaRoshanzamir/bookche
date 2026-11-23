@@ -162,7 +162,6 @@ function renderLibrary() {
       <div class="book-card-text"><input class="book-title-input" type="text" maxlength="160" data-book-title="${esc(b.id)}" aria-label="Book title" value="${esc(b.title)}"><small class="book-source" title="${esc(state.assets[b.assetId]?.name)}">${esc(state.assets[b.assetId]?.name)}</small><small>${b.pageCount} pages / ${displayNumber(b.width)} x ${displayNumber(b.height)} mm</small></div></div>
       <div class="book-card-actions"><label><input type="checkbox" data-include-book="${esc(b.id)}" ${!b.hidden ? "checked" : ""}> Include in print</label><span><button class="icon-btn" data-action="duplicate-book" data-id="${esc(b.id)}" aria-label="Duplicate ${esc(b.title)}" title="Duplicate book">${icon("copy")}</button><button class="icon-btn danger" data-action="delete-book" data-id="${esc(b.id)}" aria-label="Remove ${esc(b.title)}" title="Remove book">${icon("trash")}</button></span></div>
       <div class="book-card-bottom"><label><input type="checkbox" data-book-part="pages" data-book-id="${esc(b.id)}" aria-label="Pages for ${esc(b.title)}" ${b.includePages ? "checked" : ""} ${b.hidden ? "disabled" : ""}> Pages</label><label><input type="checkbox" data-book-part="cover" data-book-id="${esc(b.id)}" aria-label="Cover for ${esc(b.title)}" ${b.cover.enabled ? "checked" : ""} ${b.hidden ? "disabled" : ""}> Cover</label></div>
-      <div class="book-card-bottom book-row-setting"><label title="When off, this book can share the previous book's last row. Cover and page row settings still apply."><input type="checkbox" data-book-row="${esc(b.id)}" ${b.startOnNewRow !== false ? "checked" : ""} ${b.hidden ? "disabled" : ""}> Start on a new row</label></div>
     </article>`,
         )
         .join("")
@@ -378,7 +377,7 @@ function pagesPanel(b) {
     ) +
     section(
       "Spacing",
-      `${toggle("Start on a new row", "When off, pages continue after the preceding content if there is room.", "pagesStartOnNewRow", b.pagesStartOnNewRow !== false)}${numberField("Space between rows", "rowGap", b.rowGap, 0, 50, 0.5)}${state.settings.mode === "duplex" ? numberField("Space between pages", "columnGap", b.columnGap, 0, 50, 0.5) : `<div class="tip-card">${icon("scissors")}<p>Single-sided pages touch side by side.</p></div>`}`,
+      `${toggle("Start on a new row", "When off, pages continue after the preceding content if there is room.", "pagesStartOnNewRow", b.pagesStartOnNewRow === true)}${numberField("Space between rows", "rowGap", b.rowGap, 0, 50, 0.5)}${state.settings.mode === "duplex" ? numberField("Space between pages", "columnGap", b.columnGap, 0, 50, 0.5) : `<div class="tip-card">${icon("scissors")}<p>Single-sided pages touch side by side.</p></div>`}`,
     ) +
     section(
       "Reading order",
@@ -797,6 +796,22 @@ function editBook(key, value, rebuild = false, id = selected) {
   );
   changed({ form: rebuild });
 }
+function selectBook(id, keepLibrary = false) {
+  selected = id;
+  inspectorMode = "book";
+  if (keepLibrary) {
+    document.querySelectorAll("[data-book-card]").forEach((card) => {
+      const active = card.dataset.bookCard === id;
+      card.classList.toggle("selected", active);
+      card.querySelector(".book-select").setAttribute("aria-pressed", String(active));
+    });
+  } else renderLibrary();
+  renderInspector();
+}
+app.addEventListener("focusin", (event) => {
+  const id = event.target.dataset.bookTitle;
+  if (id && (selected !== id || inspectorMode !== "book")) selectBook(id, true);
+});
 function handleField(field, isInput = false) {
   if (field.dataset.bookTitle) {
     const id = field.dataset.bookTitle;
@@ -848,10 +863,6 @@ function handleField(field, isInput = false) {
     return;
   }
 
-  if (field.dataset.bookRow) {
-    editBook("startOnNewRow", field.checked, false, field.dataset.bookRow);
-    return;
-  }
   if (field.dataset.includeBook) {
     editBook("hidden", !field.checked, true, field.dataset.includeBook);
     return;
@@ -1259,6 +1270,11 @@ function showAllSheets() {
   );
 }
 app.addEventListener("click", async (event) => {
+  const card = event.target.closest("[data-book-card]");
+  if (card && !event.target.closest("button, input, label, select, textarea, a")) {
+    selectBook(card.dataset.bookCard);
+    return;
+  }
   const button = event.target.closest("[data-action]");
   if (!button || button.disabled) return;
   const action = button.dataset.action;
@@ -1279,10 +1295,7 @@ app.addEventListener("click", async (event) => {
     return;
   }
   if (action === "select-book") {
-    selected = button.dataset.id;
-    inspectorMode = "book";
-    renderLibrary();
-    renderInspector();
+    selectBook(button.dataset.id);
     return;
   }
   if (action === "inspector-tab") {
