@@ -205,3 +205,9 @@ export function cuttingGridPoints(width, height, face, settings, frontPieces) {
   }
   return points;
 }
+
+// Increase zoom detail without allocating an unbounded full-sheet canvas.
+export function previewPixelsPerMm(width, height, zoom = 1) {
+  const base = Math.min(1800 / width, (2.8 * 72) / 25.4);
+  return Math.min(4096 / Math.max(width, height), base * Math.max(1, zoom));
+}

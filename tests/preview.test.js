@@ -258,3 +258,15 @@ test("disabled cut marks ignore stale custom ranges while keeping the outer bord
   b.border = true;
   assert.deepEqual(cutGuides(piece, b).map(s => s.type), ["outline"]);
 });
+
+test("high zoom adds preview detail while bounding canvas dimensions", async () => {
+  const { previewPixelsPerMm } = await import("../src/render-geometry.js");
+  for (const [width, height] of [[210, 297], [297, 210], [40, 1200], [1200, 40]]) {
+    const base = previewPixelsPerMm(width, height, 1);
+    const enlarged = previewPixelsPerMm(width, height, 10);
+    assert.ok(enlarged >= base);
+    assert.ok(Math.ceil(width * enlarged) <= 4096);
+    assert.ok(Math.ceil(height * enlarged) <= 4096);
+  }
+  assert.ok(previewPixelsPerMm(210, 297, 10) > previewPixelsPerMm(210, 297, 1));
+});

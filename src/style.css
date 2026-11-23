@@ -3032,3 +3032,174 @@ input.scale-slider {
     margin: 0 3px;
   }
 }
+
+/* Free either sidebar's space for the preview. */
+:root {
+  --app-header-height: 80px;
+  --library-width: 248px;
+  --inspector-width: 312px;
+}
+.app-header {
+  height: var(--app-header-height);
+}
+.workspace {
+  --left-width: var(--library-width);
+  --right-width: var(--inspector-width);
+  grid-template-columns: var(--left-width) minmax(0, 1fr) var(--right-width);
+}
+.workspace.books-collapsed {
+  --left-width: 0px;
+}
+.workspace.settings-collapsed {
+  --right-width: 0px;
+}
+.library {
+  grid-column: 1;
+  grid-row: 1;
+}
+.studio {
+  grid-column: 2;
+  grid-row: 1;
+}
+.inspector {
+  position: relative;
+  grid-column: 3;
+  grid-row: 1;
+}
+#book-library[hidden],
+#inspector[hidden],
+.panel-restore-controls button[hidden] {
+  display: none;
+}
+.library-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.library-heading h1 {
+  flex: 1;
+  min-width: 0;
+}
+.panel-collapse {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  padding: 5px;
+  color: #9286a1;
+}
+.inspector-tabs .panel-collapse {
+  flex: 0 0 28px;
+  align-self: center;
+  height: 28px;
+  padding: 5px;
+  bottom: 0;
+  border-bottom: 0;
+}
+.inspector-empty > .panel-collapse {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.studio-heading {
+  flex-wrap: wrap;
+}
+.panel-restore-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.panel-restore-controls .text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+}
+.panel-restore-controls .icon {
+  width: 15px;
+  height: 15px;
+}
+.zoom-controls .zoom-select {
+  width: 86px;
+  min-height: 30px;
+  padding: 4px 23px 4px 7px;
+  border-color: transparent;
+  background-color: transparent;
+  font-size: 12px;
+  color: #7c738e;
+}
+.zoom-controls .zoom-select:hover,
+.zoom-controls .zoom-select:focus {
+  border-color: #ded8eb;
+  background-color: white;
+}
+@media (min-width: 1600px) {
+  :root { --library-width: 270px; --inspector-width: 340px; }
+}
+@media (min-width: 801px) {
+  .workspace { height: calc(100dvh - var(--app-header-height)); }
+}
+@media (max-width: 1200px) {
+  :root { --library-width: 215px; --inspector-width: 285px; }
+}
+@media (max-width: 990px) {
+  :root { --library-width: 190px; --inspector-width: 260px; }
+}
+@media (max-width: 800px) {
+  :root { --app-header-height: 72px; --library-width: 180px; }
+  .workspace {
+    grid-template-columns: var(--left-width) minmax(0, 1fr);
+    min-height: calc(100dvh - var(--app-header-height));
+  }
+  .library { grid-row: 1 / 3; }
+  .inspector { grid-column: 2; grid-row: 2; }
+}
+@media (max-width: 560px) {
+  :root { --app-header-height: 70px; }
+}
+
+/* Keep the library heading and upload action compact. */
+.library {
+  padding-top: 16px;
+}
+.library-heading {
+  padding: 0 4px 8px;
+}
+.library-heading h1 {
+  margin: 0;
+}
+.upload-zone {
+  position: static;
+  width: auto;
+  height: auto;
+  margin-top: 8px;
+  padding: 12px 8px;
+}
+.upload-zone .upload-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 0;
+  color: inherit;
+}
+.upload-zone .upload-title .icon {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+.upload-zone .upload-title strong {
+  display: inline;
+}
+.upload-zone .upload-hint {
+  display: block;
+  margin-top: 5px;
+}
+.library-label {
+  margin-top: 18px;
+}
+@media (max-width: 560px) {
+  .book-list {
+    padding-right: 0;
+  }
+}

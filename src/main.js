@@ -49,6 +49,8 @@ let selected = null,
   inspectorMode = "book",
   faceIndex = 0,
   zoom = 1,
+  booksCollapsed = false,
+  settingsCollapsed = false,
   revision = 0;
 let layout,
   exportCache,
@@ -71,17 +73,17 @@ app.innerHTML = `
   </nav>
 </header>
 <div class="workspace">
-  <aside class="library" aria-label="Book library">
-    <div class="library-heading"><h1>Books<span id="book-count">0</span></h1></div>
-    <button class="upload-zone" id="upload-zone" data-action="add-books">${icon("plus")}<strong>Add your PDFs</strong><span>Choose files or drop them here</span></button>
+  <aside class="library" id="book-library" aria-label="Book library">
+    <div class="library-heading"><h1>Books<span id="book-count">0</span></h1><button class="icon-btn panel-collapse" id="collapse-books" data-action="toggle-books" aria-label="Collapse Books" aria-expanded="true" aria-controls="book-library" title="Collapse Books">${icon("left")}</button></div>
+    <button class="upload-zone" id="upload-zone" data-action="add-books"><span class="upload-title">${icon("plus")}<strong>Add your PDFs</strong></span><span class="upload-hint">Choose files or drop them here</span></button>
     <div class="library-label"><span>IN THIS PROJECT</span><button class="text-btn" data-action="add-sample" title="Add the sample book">Try a sample</button></div>
     <div class="book-list" id="book-list"></div>
     <div class="library-footer"><div class="privacy-note"><span class="privacy-icon" aria-hidden="true">${icon("shield")}</span><strong>Files stay on your device</strong></div><button class="text-btn" data-action="help">Help</button></div>
   </aside>
   <main class="studio">
-    <div class="studio-heading"><h2>Print layout</h2></div>
+    <div class="studio-heading"><h2>Print layout</h2><div class="panel-restore-controls"><button class="text-btn" id="restore-books" data-action="toggle-books" aria-label="Expand Books" aria-expanded="false" aria-controls="book-library" hidden>${icon("book")} Books</button><button class="text-btn" id="restore-settings" data-action="toggle-settings" aria-label="Expand book settings" aria-expanded="false" aria-controls="inspector" hidden>${icon("settings")} Book settings</button></div></div>
     <section class="sheet-setup" id="sheet-setup" aria-label="Sheet setup"></section>
-    <div class="preview-toolbar"><div class="preview-title">${icon("eye")} <strong>Preview</strong></div><div class="zoom-controls"><button class="icon-btn" data-action="zoom-out" aria-label="Zoom out">${icon("minus")}</button><button class="text-btn" data-action="zoom-reset" id="zoom-label">Fit</button><button class="icon-btn" data-action="zoom-in" aria-label="Zoom in">${icon("plus")}</button></div></div>
+    <div class="preview-toolbar"><div class="preview-title">${icon("eye")} <strong>Preview</strong></div><div class="zoom-controls"><button class="icon-btn" data-action="zoom-out" aria-label="Zoom out">${icon("minus")}</button><select class="zoom-select" id="zoom-label" data-preview-zoom="true" aria-label="Preview zoom"><option value="1">Fit</option></select><button class="icon-btn" data-action="zoom-in" aria-label="Zoom in">${icon("plus")}</button></div></div>
     <div id="layout-messages" class="layout-messages" aria-live="polite"></div>
     <div class="preview-stage" id="preview-stage"><div class="sheet-scene" id="sheet-scene"><div class="dimension horizontal" id="paper-width"></div><div class="dimension vertical"><span id="paper-height"></span></div><div class="paper" id="paper"><canvas id="preview-canvas" aria-label="Print sheet preview"></canvas><div id="piece-overlays"></div><div class="preview-loading" id="preview-loading"><span class="spinner"></span><span>Loading preview...</span></div></div></div><div class="empty-preview" id="empty-preview" hidden><span class="empty-icon">${icon("book")}</span><h3>Add a book</h3><p>Add a PDF or try the sample.</p><button class="btn primary" data-action="add-books">${icon("plus")} Add a PDF</button><button class="text-btn" data-action="add-sample">Try the sample book</button></div></div>
     <div class="preview-pagination"><span id="preview-info"></span><div class="page-navigation"><button class="icon-btn" data-action="prev-face" aria-label="Previous sheet side">${icon("left")}</button><span id="face-label">Sheet 1</span><button class="icon-btn" data-action="next-face" aria-label="Next sheet side">${icon("chevron")}</button></div><button class="text-btn" data-action="all-sheets">${icon("grid")} All sheets</button></div>
@@ -169,7 +171,7 @@ function renderInspector() {
   const el = $("#inspector"),
     book = bookNow();
   if (!book) {
-    el.innerHTML = `<div class="inspector-empty">${icon("settings")}<h3>Book settings</h3><p>Add or select a book to adjust its pages, cover, and cutting guides.</p><button class="btn" data-action="sheet-setup">Sheet setup</button></div>`;
+    el.innerHTML = `<div class="inspector-empty">${settingsCollapseButton()}${icon("settings")}<h3>Book settings</h3><p>Add or select a book to adjust its pages, cover, and cutting guides.</p><button class="btn" data-action="sheet-setup">Sheet setup</button></div>`;
     return;
   }
   const tabDisabled = (tab) =>
@@ -196,7 +198,7 @@ function renderInspector() {
     )
     .join(
       "",
-    )}</div><div class="inspector-content" role="tabpanel"><fieldset class="book-settings-fields" aria-label="Book print settings" ${book.hidden ? "disabled" : ""}>${inspectorTab === "pages" ? pagesPanel(book) : inspectorTab === "cover" ? coverPanel(book) : cuttingPanel(book)}</fieldset></div>`;
+    )}${settingsCollapseButton()}</div><div class="inspector-content" role="tabpanel"><fieldset class="book-settings-fields" aria-label="Book print settings" ${book.hidden ? "disabled" : ""}>${inspectorTab === "pages" ? pagesPanel(book) : inspectorTab === "cover" ? coverPanel(book) : cuttingPanel(book)}</fieldset></div>`;
   syncSizingControls();
 }
 const displayNumber = (value) => Number(value.toFixed(2));
@@ -697,6 +699,34 @@ function updateFaceLabels() {
   $('[data-action="next-face"]').disabled =
     !face || faceIndex >= layout.faces.length - 1;
 }
+function setSidebarCollapsed(panel, collapsed, moveFocus = false) {
+  const library = panel === "books",
+    workspace = $(".workspace");
+  if (library) booksCollapsed = collapsed;
+  else settingsCollapsed = collapsed;
+  workspace.classList.toggle("books-collapsed", booksCollapsed);
+  workspace.classList.toggle("settings-collapsed", settingsCollapsed);
+  $("#book-library").hidden = booksCollapsed;
+  $("#inspector").hidden = settingsCollapsed;
+  $("#restore-books").hidden = !booksCollapsed;
+  $("#restore-settings").hidden = !settingsCollapsed;
+  if (moveFocus)
+    $(collapsed ? (library ? "#restore-books" : "#restore-settings") :
+      (library ? "#collapse-books" : "#collapse-settings"))?.focus();
+  resizePreview();
+}
+function settingsCollapseButton() {
+  return `<button class="icon-btn panel-collapse" id="collapse-settings" data-action="toggle-settings" aria-label="Collapse book settings" aria-expanded="true" aria-controls="inspector" title="Collapse book settings">${icon("chevron")}</button>`;
+}
+function setPreviewZoom(value) {
+  zoom = Math.max(0.5, Math.min(10, value));
+  resizePreview();
+  if (zoom <= 1) {
+    $("#preview-stage").scrollLeft = 0;
+    $("#preview-stage").scrollTop = 0;
+  }
+  updatePreview().catch(showPreviewError);
+}
 function resizePreview() {
   if (!layout?.faces.length) return;
   const stage = $("#preview-stage"),
@@ -710,8 +740,13 @@ function resizePreview() {
   scene.style.width = `${w}px`;
   scene.style.height = `${h}px`;
   stage.classList.toggle("zoomed", zoom > 1);
-  $("#zoom-label").textContent =
-    zoom === 1 ? "Fit" : `${Math.round(zoom * 100)}%`;
+  const presets = [0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 5, 7.5, 10];
+  if (!presets.includes(zoom)) presets.push(zoom);
+  $("#zoom-label").innerHTML = presets.sort((a, b) => a - b).map((value) =>
+    option(String(value), value === 1 ? "Fit" : `${Math.round(value * 100)}%`, String(zoom)),
+  ).join("");
+  $('[data-action="zoom-out"]').disabled = zoom <= 0.5;
+  $('[data-action="zoom-in"]').disabled = zoom >= 10;
 }
 async function ensurePdf() {
   if (exportCache?.revision === revision) return exportCache;
@@ -762,9 +797,14 @@ async function updatePreview() {
         `Loading ${pending} page${pending === 1 ? "" : "s"}...`;
       if (error) showPreviewError(error);
     },
+    zoom,
   );
   renderOverlays();
   updateFaceLabels();
+}
+function shortPreviewTitle(title) {
+  const characters = Array.from(title);
+  return characters.length > 20 ? characters.slice(0, 17).join("") + "..." : title;
 }
 function renderOverlays() {
   const face = layout.faces[faceIndex];
@@ -772,7 +812,7 @@ function renderOverlays() {
     ? face.pieces
         .map(
           (p) =>
-            `<button class="piece-overlay" data-action="select-book" data-id="${esc(p.bookId)}" style="left:${(p.x / layout.width) * 100}%;top:${(p.y / layout.height) * 100}%;width:${(p.width / layout.width) * 100}%;height:${(p.height / layout.height) * 100}%" aria-label="${esc(p.title)} - ${p.kind === "cover" ? "cover" : `PDF page ${p.page}`}"><span>${esc(p.title)}<small>${p.kind === "cover" ? "Back / spine / front" : `PDF page ${p.page}`}</small></span></button>`,
+            `<button class="piece-overlay" data-action="select-book" data-id="${esc(p.bookId)}" style="left:${(p.x / layout.width) * 100}%;top:${(p.y / layout.height) * 100}%;width:${(p.width / layout.width) * 100}%;height:${(p.height / layout.height) * 100}%" aria-label="${esc(p.title)} - ${p.kind === "cover" ? "cover" : `PDF page ${p.page}`}"><span>${esc(shortPreviewTitle(p.title))}<small>${p.kind === "cover" ? "Back / spine / front" : `PDF page ${p.page}`}</small></span></button>`,
         )
         .join("")
     : "";
@@ -792,6 +832,7 @@ function editBook(key, value, rebuild = false, id = selected) {
   changed({ form: rebuild });
 }
 function selectBook(id, keepLibrary = false) {
+  if (settingsCollapsed) setSidebarCollapsed("settings", false);
   selected = id;
   inspectorMode = "book";
   if (keepLibrary) {
@@ -808,6 +849,10 @@ app.addEventListener("focusin", (event) => {
   if (id && (selected !== id || inspectorMode !== "book")) selectBook(id, true);
 });
 function handleField(field, isInput = false) {
+  if (field.dataset.previewZoom) {
+    setPreviewZoom(Number(field.value));
+    return;
+  }
   if (field.dataset.bookTitle) {
     const id = field.dataset.bookTitle;
     if (selected !== id || inspectorMode !== "book") {
@@ -1285,6 +1330,12 @@ app.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-action]");
   if (!button || button.disabled) return;
   const action = button.dataset.action;
+  if (action === "toggle-books" || action === "toggle-settings") {
+    const library = action === "toggle-books";
+    setSidebarCollapsed(library ? "books" : "settings",
+      library ? !booksCollapsed : !settingsCollapsed, true);
+    return;
+  }
   if (action === "toggle-sheet-options") {
     setSheetOptionsOpen($("#sheet-advanced").hidden);
     return;
@@ -1334,18 +1385,8 @@ app.addEventListener("click", async (event) => {
     return;
   }
   if (action.startsWith("zoom-")) {
-    zoom =
-      action === "zoom-reset"
-        ? 1
-        : Math.max(
-            0.5,
-            Math.min(
-              3,
-              Math.round((zoom + (action === "zoom-in" ? 0.25 : -0.25)) * 100) /
-                100,
-            ),
-          );
-    resizePreview();
+    setPreviewZoom(action === "zoom-reset" ? 1 :
+      Math.round((zoom + (action === "zoom-in" ? 0.25 : -0.25)) * 100) / 100);
     return;
   }
   if (action === "close-modal") {

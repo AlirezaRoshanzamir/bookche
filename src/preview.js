@@ -2,6 +2,7 @@ import * as pdfjs from "pdfjs-dist";
 import { PreviewCache } from "./preview-cache.js";
 import {
   fitArtwork,
+  previewPixelsPerMm,
   pixelBox,
   hasArtwork,
   coverPanels,
@@ -191,10 +192,10 @@ export function createSheetPreview() {
       generation++;
       cache.show([]);
     },
-    render(canvas, books, assets, settings, layout, face, onStatus) {
+    render(canvas, books, assets, settings, layout, face, onStatus, zoom = 1) {
       const serial = ++generation,
         start = performance.now();
-      const pixelsPerMm = Math.min(1800 / layout.width, (2.8 * 72) / 25.4);
+      const pixelsPerMm = previewPixelsPerMm(layout.width, layout.height, zoom);
       const commands = [],
         resources = new Map(),
         bookMap = new Map(books.map((b) => [b.id, b]));
