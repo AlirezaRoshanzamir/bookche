@@ -2840,3 +2840,17 @@ input.scale-slider {
 
 .book-card { cursor: pointer; }
 .book-title-input { cursor: text; }
+
+.book-card-bottom {
+  gap: 14px;
+}
+.book-reorder {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+.book-reorder .icon-btn {
+  width: 26px;
+  height: 26px;
+  padding: 4px;
+}

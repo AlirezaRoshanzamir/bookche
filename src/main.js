@@ -155,13 +155,11 @@ function renderLibrary() {
   $("#book-list").innerHTML = state.books.length
     ? state.books
         .map(
-          (
-            b,
-          ) => `<article class="book-card ${selected === b.id && inspectorMode === "book" ? "selected" : ""} ${b.hidden ? "excluded" : ""}" data-book-card="${esc(b.id)}">
+          (b, index) => `<article class="book-card ${selected === b.id && inspectorMode === "book" ? "selected" : ""} ${b.hidden ? "excluded" : ""}" data-book-card="${esc(b.id)}">
       <div class="book-card-top"><button class="book-select" data-action="select-book" data-id="${esc(b.id)}" aria-label="Edit ${esc(b.title)}" aria-pressed="${selected === b.id}"><span class="mini-book" style="--book-color:${esc(b.cover.color)};--book-ink:${esc(b.cover.ink)}"><span>${esc(b.title)}</span></span></button>
       <div class="book-card-text"><input class="book-title-input" type="text" maxlength="160" data-book-title="${esc(b.id)}" aria-label="Book title" value="${esc(b.title)}"><small class="book-source" title="${esc(state.assets[b.assetId]?.name)}">${esc(state.assets[b.assetId]?.name)}</small><small>${b.pageCount} pages / ${displayNumber(b.width)} x ${displayNumber(b.height)} mm</small></div></div>
       <div class="book-card-actions"><label><input type="checkbox" data-include-book="${esc(b.id)}" ${!b.hidden ? "checked" : ""}> Include in print</label><span><button class="icon-btn" data-action="duplicate-book" data-id="${esc(b.id)}" aria-label="Duplicate ${esc(b.title)}" title="Duplicate book">${icon("copy")}</button><button class="icon-btn danger" data-action="delete-book" data-id="${esc(b.id)}" aria-label="Remove ${esc(b.title)}" title="Remove book">${icon("trash")}</button></span></div>
-      <div class="book-card-bottom"><label><input type="checkbox" data-book-part="pages" data-book-id="${esc(b.id)}" aria-label="Pages for ${esc(b.title)}" ${b.includePages ? "checked" : ""} ${b.hidden ? "disabled" : ""}> Pages</label><label><input type="checkbox" data-book-part="cover" data-book-id="${esc(b.id)}" aria-label="Cover for ${esc(b.title)}" ${b.cover.enabled ? "checked" : ""} ${b.hidden ? "disabled" : ""}> Cover</label></div>
+      <div class="book-card-bottom"><label><input type="checkbox" data-book-part="pages" data-book-id="${esc(b.id)}" aria-label="Pages for ${esc(b.title)}" ${b.includePages ? "checked" : ""} ${b.hidden ? "disabled" : ""}> Pages</label><label><input type="checkbox" data-book-part="cover" data-book-id="${esc(b.id)}" aria-label="Cover for ${esc(b.title)}" ${b.cover.enabled ? "checked" : ""} ${b.hidden ? "disabled" : ""}> Cover</label><span class="book-reorder" role="group" aria-label="Book order"><button class="icon-btn" data-action="move-book" data-id="${esc(b.id)}" data-direction="-1" aria-label="Move ${esc(b.title)} up" title="Move up" ${index === 0 ? "disabled" : ""}>${icon("up")}</button><button class="icon-btn" data-action="move-book" data-id="${esc(b.id)}" data-direction="1" aria-label="Move ${esc(b.title)} down" title="Move down" ${index === state.books.length - 1 ? "disabled" : ""}>${icon("down")}</button></span></div>
     </article>`,
         )
         .join("")
@@ -847,6 +845,9 @@ function handleField(field, isInput = false) {
     card
       .querySelector(".book-select")
       .setAttribute("aria-label", `Edit ${book.title}`);
+    for (const direction of [-1, 1])
+      card.querySelector(`[data-action="move-book"][data-direction="${direction}"]`)
+        .setAttribute("aria-label", `Move ${book.title} ${direction === -1 ? "up" : "down"}`);
     if (!isInput) field.value = book.title;
     changed({ library: false });
     return;
@@ -1436,6 +1437,23 @@ app.addEventListener("click", async (event) => {
       changed({ form: true });
       toast("Sample added.");
     });
+    return;
+  }
+  if (action === "move-book") {
+    const index = state.books.findIndex((b) => b.id === button.dataset.id),
+      direction = Number(button.dataset.direction),
+      destination = index + direction;
+    if (index < 0 || destination < 0 || destination >= state.books.length) return;
+    const books = [...state.books];
+    [books[index], books[destination]] = [books[destination], books[index]];
+    state.books = books;
+    changed();
+    const controls = [...document.querySelectorAll('[data-action="move-book"]')]
+      .filter((control) => control.dataset.id === button.dataset.id);
+    const next = controls.find((control) =>
+      !control.disabled && Number(control.dataset.direction) === direction,
+    ) || controls.find((control) => !control.disabled);
+    next?.focus();
     return;
   }
   if (action === "duplicate-book") {

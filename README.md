@@ -93,7 +93,7 @@ The size link uses the most common page shape in the selected range, so a differ
 
 Edit **Cover > Back cover text** to replace the generated back-cover message. Line breaks are preserved and long text wraps to fit; clear the field for a blank back. Uploaded artwork keeps its own lettering.
 
-Book cards contain the editable title, duplicate/remove buttons, and Pages/Cover checkboxes. Unchecked parts have disabled settings tabs. For generated covers, **Spine text** can use the book title, custom text, or no text. Edition lettering is no longer printed.
+Book cards contain the editable title, duplicate/remove buttons, Pages/Cover checkboxes, and up/down arrows. The arrows change the book order in the library and print layout; that order is saved with the project. Unchecked parts have disabled settings tabs. For generated covers, **Spine text** can use the book title, custom text, or no text. Edition lettering is no longer printed.
 
 Touching pages share pixel boundaries in the preview to avoid thumbnail-rounding seams. Export keeps exact millimeter positions; PDF viewers may still show hairlines at some zoom levels because of edge smoothing, even where page boundaries touch. Margins already in the source PDF are preserved.
 

@@ -1,5 +1,7 @@
 const paths = {
   book: '<path d="M4 4h6a3 3 0 0 1 3 3v14a4 4 0 0 0-4-3H4z"/><path d="M13 7a3 3 0 0 1 3-3h4v14h-3a4 4 0 0 0-4 3"/>',
+  up: '<path d="M12 20V4m-6 6 6-6 6 6"/>',
+  down: '<path d="M12 4v16m-6-6 6 6 6-6"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   upload: '<path d="M12 16V3m-5 5 5-5 5 5M4 16v4h16v-4"/>',
   download: '<path d="M12 3v13m-5-5 5 5 5-5M4 17v4h16v-4"/>',
