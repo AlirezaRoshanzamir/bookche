@@ -11,6 +11,16 @@ export function fitInside(sourceWidth, sourceHeight, width, height) {
   };
 }
 
+// Scrollbars change clientWidth/clientHeight. Fit to the stable outer box so
+// their appearance cannot resize the sheet and then make them disappear again.
+export function previewSceneSize(stage, paper, zoom = 1) {
+  const fit = Math.min(
+    Math.max(160, stage.offsetWidth - 100) / paper.width,
+    Math.max(260, stage.offsetHeight - 74) / paper.height,
+  );
+  return { width: paper.width * fit * zoom, height: paper.height * fit * zoom };
+}
+
 export function fitArtwork(
   sourceWidth,
   sourceHeight,

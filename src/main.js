@@ -1,6 +1,6 @@
 import "./style.css";
 import { createSheetPreview } from "./preview.js";
-import { hasArtwork } from "./render-geometry.js";
+import { hasArtwork, previewSceneSize } from "./render-geometry.js";
 import { icon } from "./icons.js";
 import {
   computeLayout,
@@ -768,14 +768,11 @@ function resizePreview() {
   if (!layout?.faces.length) return;
   const stage = $("#preview-stage"),
     scene = $("#sheet-scene");
-  const fit = Math.min(
-    Math.max(160, stage.clientWidth - 100) / layout.width,
-    Math.max(260, stage.clientHeight - 74) / layout.height,
-  );
-  const w = layout.width * fit * zoom,
-    h = layout.height * fit * zoom;
-  scene.style.width = `${w}px`;
-  scene.style.height = `${h}px`;
+  const size = previewSceneSize(stage, layout, zoom),
+    width = `${size.width}px`,
+    height = `${size.height}px`;
+  if (scene.style.width !== width) scene.style.width = width;
+  if (scene.style.height !== height) scene.style.height = height;
   stage.classList.toggle("zoomed", zoom > 1);
   const presets = [0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 5, 7.5, 10];
   if (!presets.includes(zoom)) presets.push(zoom);
@@ -1593,7 +1590,7 @@ document.addEventListener("keydown", (event) => {
     $('[data-action="save-project"]').click();
   }
 });
-new ResizeObserver(() => resizePreview()).observe($("#preview-stage"));
+new ResizeObserver(() => resizePreview()).observe($("#preview-stage"), { box: "border-box" });
 async function init() {
   let restored = false;
   try {
