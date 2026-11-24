@@ -1,4 +1,5 @@
 import "./style.css";
+import { makeManualBook, attachBookPdf } from "./book-source.js";
 import { createSampleBook, SAMPLE_BOOKS } from "./sample-book.js";
 import { createSheetPreview } from "./preview.js";
 import { hasArtwork, previewSceneSize } from "./render-geometry.js";
@@ -76,7 +77,7 @@ app.innerHTML = `
 <div class="workspace">
   <aside class="library" id="book-library" aria-label="Book library">
     <div class="library-heading"><h1>Books<span id="book-count">0</span></h1><button class="icon-btn panel-collapse" id="collapse-books" data-action="toggle-books" aria-label="Collapse Books" aria-expanded="true" aria-controls="book-library" title="Hide Books panel">${icon("hide-left-panel")}</button></div>
-    <button class="upload-zone" id="upload-zone" data-action="add-books"><span class="upload-title">${icon("plus")}<strong>Add your PDFs</strong></span><span class="upload-hint">Choose files or drop them here</span></button>
+    <button class="upload-zone" id="upload-zone" data-action="add-books" aria-label="Add book"><span class="upload-title">${icon("plus")}<strong>Add book</strong></span><span class="upload-hint">From PDF or manual</span></button>
     <div class="library-label"><span>IN THIS PROJECT</span><button class="text-btn" data-action="add-sample" title="Add both sample books">Try samples</button></div>
     <div class="book-list" id="book-list"></div>
     <div class="library-footer"><div class="privacy-note"><span class="privacy-icon" aria-hidden="true">${icon("shield")}</span><strong>Files stay on your device</strong></div><button class="text-btn" data-action="help">Help</button></div>
@@ -86,14 +87,15 @@ app.innerHTML = `
     <section class="sheet-setup" id="sheet-setup" aria-label="Sheet setup"></section>
     <div class="preview-toolbar"><div class="preview-title">${icon("eye")} <strong>Preview</strong></div><div class="zoom-controls"><button class="icon-btn" data-action="zoom-out" aria-label="Zoom out">${icon("minus")}</button><select class="zoom-select" id="zoom-label" data-preview-zoom="true" aria-label="Preview zoom"><option value="1">Fit</option></select><button class="icon-btn" data-action="zoom-in" aria-label="Zoom in">${icon("plus")}</button></div></div>
     <div id="layout-messages" class="layout-messages" aria-live="polite"></div>
-    <div class="preview-stage" id="preview-stage"><div class="sheet-scene" id="sheet-scene"><div class="dimension horizontal" id="paper-width"></div><div class="dimension vertical"><span id="paper-height"></span></div><div class="paper" id="paper"><canvas id="preview-canvas" aria-label="Print sheet preview"></canvas><div id="piece-overlays"></div><div class="preview-loading" id="preview-loading"><span class="spinner"></span><span>Loading preview...</span></div></div></div><div class="empty-preview" id="empty-preview" hidden><span class="empty-icon">${icon("book")}</span><h3>Add a book</h3><p>Add a PDF or try the samples.</p><button class="btn primary" data-action="add-books">${icon("plus")} Add a PDF</button><button class="text-btn" data-action="add-sample">Try the sample books</button></div></div>
+    <div class="preview-stage" id="preview-stage"><div class="sheet-scene" id="sheet-scene"><div class="dimension horizontal" id="paper-width"></div><div class="dimension vertical"><span id="paper-height"></span></div><div class="paper" id="paper"><canvas id="preview-canvas" aria-label="Print sheet preview"></canvas><div id="piece-overlays"></div><div class="preview-loading" id="preview-loading"><span class="spinner"></span><span>Loading preview...</span></div></div></div><div class="empty-preview" id="empty-preview" hidden><span class="empty-icon">${icon("book")}</span><h3>Add a book</h3><p>Add a book or try the samples.</p><button class="btn primary" data-action="add-books">${icon("plus")} Add book</button><button class="text-btn" data-action="add-sample">Try the sample books</button></div></div>
     <div class="preview-pagination"><span id="preview-info"></span><div class="page-navigation"><button class="icon-btn" data-action="prev-face" aria-label="Previous sheet side">${icon("left")}</button><span id="face-label">Sheet 1</span><button class="icon-btn" data-action="next-face" aria-label="Next sheet side">${icon("chevron")}</button></div><button class="text-btn" data-action="all-sheets">${icon("grid")} All sheets</button></div>
-    <div class="print-bar"><div class="print-total"><span class="print-icon">${icon("file")}</span><div><strong id="output-total">No sheets</strong><small id="output-detail">Add a PDF to begin.</small></div></div><div class="print-actions"><button class="btn" data-action="print" id="print-btn">${icon("print")} Print</button><button class="btn primary" data-action="export" id="export-btn">${icon("download")} Export PDF</button></div></div>
+    <div class="print-bar"><div class="print-total"><span class="print-icon">${icon("file")}</span><div><strong id="output-total">No sheets</strong><small id="output-detail">Add a book to begin.</small></div></div><div class="print-actions"><button class="btn" data-action="print" id="print-btn">${icon("print")} Print</button><button class="btn primary" data-action="export" id="export-btn">${icon("download")} Export PDF</button></div></div>
     <div class="scale-note">${icon("info")} Print at <strong>100% / Actual size</strong>. Turn off page scaling and headers.</div>
   </main>
   <aside class="inspector" id="inspector" aria-label="Book settings"></aside>
 </div>
 <input id="pdf-input" type="file" accept="application/pdf,.pdf" multiple hidden>
+<input id="book-pdf-input" type="file" accept="application/pdf,.pdf" hidden>
 <input id="project-input" type="file" accept=".bookche,.smallhours,.json,application/json" hidden>
 <input id="cover-input" type="file" accept="application/pdf,image/png,image/jpeg,.pdf,.png,.jpg,.jpeg" hidden>
 <dialog id="modal"><div id="modal-content"></div></dialog>
@@ -160,7 +162,7 @@ function renderLibrary() {
         .map(
           (b, index) => `<article class="book-card ${selected === b.id && inspectorMode === "book" ? "selected" : ""} ${b.hidden ? "excluded" : ""}" data-book-card="${esc(b.id)}">
       <div class="book-card-top"><button class="book-select" data-action="select-book" data-id="${esc(b.id)}" aria-label="Edit ${esc(b.title)}" aria-pressed="${selected === b.id}"><span class="mini-book" style="--book-color:${esc(b.cover.color)};--book-ink:${esc(b.cover.ink)}"><span>${esc(b.title)}</span></span></button>
-      <div class="book-card-text"><input class="book-title-input" type="text" maxlength="160" data-book-title="${esc(b.id)}" aria-label="Book title" value="${esc(b.title)}"><small class="book-source" title="${esc(state.assets[b.assetId]?.name)}">${esc(state.assets[b.assetId]?.name)}</small><small>${b.pageCount} pages / ${displayNumber(b.width)} x ${displayNumber(b.height)} mm</small></div></div>
+      <div class="book-card-text"><input class="book-title-input" type="text" maxlength="160" data-book-title="${esc(b.id)}" aria-label="Book title" value="${esc(b.title)}"><small class="book-source" title="${esc(state.assets[b.assetId]?.name || "Manual book")}">${esc(state.assets[b.assetId]?.name || "Manual book")}</small><small>${b.pageCount} pages / ${displayNumber(b.width)} x ${displayNumber(b.height)} mm</small></div></div>
       <div class="book-card-actions"><label><input type="checkbox" data-include-book="${esc(b.id)}" ${!b.hidden ? "checked" : ""}> Include in print</label><span><button class="icon-btn" data-action="duplicate-book" data-id="${esc(b.id)}" aria-label="Duplicate ${esc(b.title)}" title="Duplicate book">${icon("copy")}</button><button class="icon-btn danger" data-action="delete-book" data-id="${esc(b.id)}" aria-label="Remove ${esc(b.title)}" title="Remove book">${icon("trash")}</button></span></div>
       <div class="book-card-bottom"><label><input type="checkbox" data-book-part="pages" data-book-id="${esc(b.id)}" aria-label="Pages for ${esc(b.title)}" ${b.includePages ? "checked" : ""} ${b.hidden ? "disabled" : ""}> Pages</label><label><input type="checkbox" data-book-part="cover" data-book-id="${esc(b.id)}" aria-label="Cover for ${esc(b.title)}" ${b.cover.enabled ? "checked" : ""} ${b.hidden ? "disabled" : ""}> Cover</label><span class="book-reorder" role="group" aria-label="Book order"><button class="icon-btn" data-action="move-book" data-id="${esc(b.id)}" data-direction="-1" aria-label="Move ${esc(b.title)} up" title="Move up" ${index === 0 ? "disabled" : ""}>${icon("up")}</button><button class="icon-btn" data-action="move-book" data-id="${esc(b.id)}" data-direction="1" aria-label="Move ${esc(b.title)} down" title="Move down" ${index === state.books.length - 1 ? "disabled" : ""}>${icon("down")}</button></span></div>
     </article>`,
@@ -260,6 +262,7 @@ function proportionSummary(book) {
   return `<div class="proportion-reference"><div class="proportion-summary"><span class="ratio-page" style="aspect-ratio:${source.width}/${source.height}">${icon("file")}</span><div><strong>PDF ratio <span>${ratioLabel(source)}</span></strong><small>Page ${source.page} / ${displayNumber(source.width)} x ${displayNumber(source.height)} mm</small></div><button class="text-btn" data-action="match-pdf-size">Match PDF</button></div>${source.mixed ? `<p class="field-help">Mixed PDF page shapes. Page ${source.page} matches ${source.matches} of ${source.total} selected pages. Match PDF fits this common shape; other shapes may keep white edges.</p>` : ""}</div>`;
 }
 function proportionControls(book) {
+  if (!book.assetId) return "";
   return (
     proportionSummary(book) +
     toggle(
@@ -386,6 +389,7 @@ function nudgeNumber(input, direction) {
   syncNumberPickers();
 }
 function pagesPanel(b) {
+  if (!b.assetId) return section("Book PDF", `<button class="btn" data-action="attach-book-pdf">${icon("upload")} Add PDF</button>`);
   return (
     section(
       "Page range",
@@ -428,7 +432,7 @@ function sourcePanel(b, key, label) {
     mode,
     [
       ["generated", "Generate a matching design"],
-      ["book", "A page from this book PDF"],
+      ...(b.assetId ? [["book", "A page from this book PDF"]] : []),
       ["asset", "Upload an image or PDF"],
     ],
     "book",
@@ -459,7 +463,7 @@ function coverPanel(b) {
   )}${c.spineMode === "custom" ? `<label class="field"><span>Custom spine text</span><input type="text" maxlength="160" data-key="cover.spineText" data-target="book" value="${esc(c.spineText)}"></label>` : ""}`;
   const backText = `<label class="field"><span>Back cover text</span><textarea aria-label="Back cover text" rows="4" maxlength="500" data-key="cover.backText" data-target="book">${esc(c.backText)}</textarea></label><p class="field-help">Leave blank for no text.</p>`;
   return (
-    (!b.includePages
+    (!b.includePages || !b.assetId
       ? section(
           "Cover size",
           `${proportionControls(b)}<div class="field-pair">${numberField("Width", "width", b.width, 5, 300)}${numberField("Height", "height", b.height, 5, 400)}</div>`,
@@ -711,7 +715,7 @@ function refreshLayout() {
     : "No sheets";
   $("#output-detail").textContent = layout.sheets.length
     ? `${enabled.length} book${enabled.length === 1 ? "" : "s"} / ${output.length} printed side${output.length === 1 ? "" : "s"}${duplex && s.output !== "all" ? ` / ${s.output}s only` : ""}`
-    : "Add a PDF or try the samples to begin.";
+    : "Add a book or try the samples to begin.";
   $("#empty-preview").hidden = layout.faces.length > 0;
   $("#sheet-scene").hidden = layout.faces.length === 0;
   for (const button of [$("#print-btn"), $("#export-btn")])
@@ -932,6 +936,7 @@ function handleField(field, isInput = false) {
   if (field.dataset.bookPart) {
     selected = field.dataset.bookId;
     inspectorMode = "book";
+    if (field.dataset.bookPart === "pages" && field.checked && !bookNow()?.assetId) inspectorTab = "pages";
     editBook(
       field.dataset.bookPart === "pages" ? "includePages" : "cover.enabled",
       field.checked,
@@ -1063,7 +1068,7 @@ app.addEventListener("keydown", (event) => {
     nudgeNumber(input, event.key === "ArrowUp" ? 1 : -1);
   }
 });
-let coverRequest;
+let coverRequest, bookPdfRequest;
 function pickCover(key) {
   coverRequest = { bookId: selected, key };
   $("#cover-input").value = "";
@@ -1149,6 +1154,24 @@ async function addBooks(files) {
       storageOkay,
     );
 }
+$("#book-pdf-input").addEventListener("change", async (event) => {
+  const file = event.target.files[0], bookId = bookPdfRequest;
+  event.target.value = "";
+  bookPdfRequest = null;
+  if (!file || !state.books.some(b => b.id === bookId)) return;
+  try {
+    const asset = await readAsset(file);
+    if (!state.books.some(b => b.id === bookId)) return;
+    state.assets[asset.id] = asset;
+    state.books = state.books.map(b => b.id === bookId ? attachBookPdf(b, asset) : b);
+    selected = bookId;
+    inspectorTab = "pages";
+    changed({ form: true });
+    toast("Book PDF added.");
+  } catch (error) {
+    toast(error.message, true);
+  }
+});
 $("#pdf-input").addEventListener("change", async (event) => {
   await addBooks([...event.target.files]);
   event.target.value = "";
@@ -1183,7 +1206,7 @@ $("#project-input").addEventListener("change", async (event) => {
       if (asset.mime === "application/pdf")
         Object.assign(asset, await inspectPdfDetails(asset.bytes));
     project.books.forEach(
-      (b) => (b.pageCount = project.assets[b.assetId].pageCount),
+      (b) => (b.pageCount = project.assets[b.assetId]?.pageCount || 0),
     );
     state = project;
     selected = state.books[0]?.id;
@@ -1388,7 +1411,28 @@ app.addEventListener("click", async (event) => {
   }
   if (button.tagName === "A") event.preventDefault();
   if (action === "add-books") {
+    openModal(`<h2>Add book</h2><div class="add-book-choices"><button class="btn" data-action="add-from-pdf">${icon("file")} From PDF</button><button class="btn" data-action="add-manual">${icon("book")} Manual</button></div>`);
+    return;
+  }
+  if (action === "add-from-pdf") {
+    $("#modal").close();
     $("#pdf-input").click();
+    return;
+  }
+  if (action === "add-manual") {
+    $("#modal").close();
+    const book = makeManualBook(uid());
+    state.books = [...state.books, book];
+    selected = book.id;
+    inspectorMode = "book";
+    inspectorTab = "cover";
+    changed({ form: true });
+    $(`[data-book-card="${book.id}"] .book-title-input`)?.focus({ preventScroll: true });
+    return;
+  }
+  if (action === "attach-book-pdf") {
+    bookPdfRequest = selected;
+    $("#book-pdf-input").click();
     return;
   }
   if (action === "select-book") {

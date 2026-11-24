@@ -190,7 +190,7 @@ export function computeLayout(books, settings) {
       !(
         book.width > 0 &&
         book.height > 0 &&
-        (!book.includePages ||
+        (!book.includePages || !book.pageCount ||
           (book.margin >= 0 &&
             book.margin * 2 < Math.min(book.width, book.height)))
       )
@@ -217,14 +217,14 @@ export function computeLayout(books, settings) {
         book.cover.startOnNewRow === true,
       );
     }
-    if (book.includePages && book.marks !== "none" && book.markPages === "custom") {
+    if (!book.includePages || !book.pageCount) continue;
+    if (book.marks !== "none" && book.markPages === "custom") {
       try {
         parseRanges(book.markRanges, book.pageCount);
       } catch (error) {
         errors.push(`${book.title} cut marks: ${error.message}`);
       }
     }
-    if (!book.includePages) continue;
     let pages;
     try {
       pages = parseRanges(book.ranges, book.pageCount);

@@ -130,8 +130,8 @@ export function normalizeProject(data, encoded = false) {
   const ids = new Set();
   const books = data.books.map((item) => {
     if (
-      !assets[item.assetId] ||
-      assets[item.assetId].mime !== "application/pdf" ||
+      (item.assetId != null &&
+        (!assets[item.assetId] || assets[item.assetId].mime !== "application/pdf")) ||
       ids.has(item.id)
     )
       throw new Error("A book PDF is missing or a book ID is duplicated.");
@@ -139,8 +139,8 @@ export function normalizeProject(data, encoded = false) {
     const b = makeBook(
         text(item.id),
         text(item.title) || "Untitled book",
-        item.assetId,
-        assets[item.assetId].pageCount,
+        item.assetId ?? null,
+        assets[item.assetId]?.pageCount || 0,
       ),
       c = item.cover || {};
     for (const [key, low, high] of [

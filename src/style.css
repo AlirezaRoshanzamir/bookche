@@ -3203,3 +3203,6 @@ input.scale-slider {
     padding-right: 0;
   }
 }
+
+.add-book-choices { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+.add-book-choices .btn { flex: 1; min-width: 130px; justify-content: center; padding: 18px; }
