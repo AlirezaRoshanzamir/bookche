@@ -171,6 +171,7 @@ function renderInspector() {
   const el = $("#inspector"),
     book = bookNow();
   if (!book) {
+    delete el.dataset.view;
     el.innerHTML = `<div class="inspector-empty">${settingsCollapseButton()}${icon("settings")}<h3>Book settings</h3><p>Add or select a book to adjust its pages, cover, and cutting guides.</p><button class="btn" data-action="sheet-setup">Sheet setup</button></div>`;
     return;
   }
@@ -187,6 +188,20 @@ function renderInspector() {
       : book.cover.enabled
         ? "cover"
         : "cutting";
+  const view = JSON.stringify([book.id, inspectorTab]),
+    oldContent = $(".inspector-content", el),
+    root = document.scrollingElement,
+    position = el.dataset.view === view ? {
+      content: oldContent?.scrollTop || 0,
+      panel: el.scrollTop,
+      page: root.scrollTop,
+    } : null,
+    active = el.contains(document.activeElement) ? document.activeElement : null,
+    focusKey = active?.dataset.key,
+    stepKey = active?.dataset.action === "step-number"
+      ? active.closest(".number-wrap").querySelector("input").dataset.key
+      : null;
+  el.dataset.view = view;
   el.innerHTML = `<div class="inspector-tabs" role="tablist" aria-label="Book settings">${[
     ["pages", "Pages"],
     ["cover", "Cover"],
@@ -200,6 +215,28 @@ function renderInspector() {
       "",
     )}${settingsCollapseButton()}</div><div class="inspector-content" role="tabpanel"><fieldset class="book-settings-fields" aria-label="Book print settings" ${book.hidden ? "disabled" : ""}>${inspectorTab === "pages" ? pagesPanel(book) : inspectorTab === "cover" ? coverPanel(book) : cuttingPanel(book)}</fieldset></div>`;
   syncSizingControls();
+  if (position) {
+    const content = $(".inspector-content", el);
+    const field = focusKey && [...el.querySelectorAll("[data-key]")].find((node) =>
+      node.dataset.key === focusKey && node.tagName === active.tagName && node.type === active.type,
+    );
+    const stepInput = stepKey && [...el.querySelectorAll("input[data-key]")].find((node) =>
+      node.dataset.key === stepKey,
+    );
+    const focus = field || (stepInput && stepInput.closest(".number-wrap")
+      .querySelector(`[data-direction="${active.dataset.direction}"]`));
+    focus?.focus({ preventScroll: true });
+    if (field && typeof active.selectionStart === "number")
+      field.setSelectionRange(active.selectionStart, active.selectionEnd);
+    const restore = () => {
+      if (!el.contains(content)) return;
+      content.scrollTop = position.content;
+      el.scrollTop = position.panel;
+      root.scrollTop = position.page;
+    };
+    restore();
+    requestAnimationFrame(restore);
+  }
 }
 const displayNumber = (value) => Number(value.toFixed(2));
 function bookReference(book) {
@@ -984,7 +1021,7 @@ function handleField(field, isInput = false) {
       value,
       field.hasAttribute("data-rebuild") || spineVisibilityChanged,
     );
-    if (restoreSpineFocus) $('input[data-key="cover.spine"]')?.focus();
+    if (restoreSpineFocus) $('input[data-key="cover.spine"]')?.focus({ preventScroll: true });
     if (key === "cover.spine" || key === "cover.overhang") syncCoverDimensions();
     if (key === "cover.color" || key === "cover.ink") {
       const label = field.parentElement.querySelector("span");
