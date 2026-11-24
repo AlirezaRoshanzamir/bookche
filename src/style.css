@@ -3067,8 +3067,7 @@ input.scale-slider {
   grid-row: 1;
 }
 #book-library[hidden],
-#inspector[hidden],
-.panel-restore-controls button[hidden] {
+#inspector[hidden] {
   display: none;
 }
 .library-heading {
@@ -3079,45 +3078,6 @@ input.scale-slider {
 .library-heading h1 {
   flex: 1;
   min-width: 0;
-}
-.panel-collapse {
-  flex: 0 0 28px;
-  width: 28px;
-  height: 28px;
-  padding: 5px;
-  color: #9286a1;
-}
-.inspector-tabs .panel-collapse {
-  flex: 0 0 28px;
-  align-self: center;
-  height: 28px;
-  padding: 5px;
-  bottom: 0;
-  border-bottom: 0;
-}
-.inspector-empty > .panel-collapse {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-}
-.studio-heading {
-  flex-wrap: wrap;
-}
-.panel-restore-controls {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.panel-restore-controls .text-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-}
-.panel-restore-controls .icon {
-  width: 15px;
-  height: 15px;
 }
 .zoom-controls .zoom-select {
   width: 86px;
@@ -3202,4 +3162,70 @@ input.scale-slider {
   .book-list {
     padding-right: 0;
   }
+}
+
+/* A sidebar keeps the same labeled handle when open or docked at the edge. */
+.sidebar-tab {
+  position: fixed;
+  z-index: 6;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  width: 25px;
+  padding: 9px 4px;
+  border: 1px solid #dcd6e8;
+  background: #f9f7fd;
+  color: #80728f;
+  box-shadow: 0 2px 6px #35254d0a;
+  transition: left .18s ease, right .18s ease, background-color .15s;
+}
+.sidebar-tab--books {
+  left: var(--left-width);
+  border-left: 0;
+  border-radius: 0 6px 6px 0;
+}
+.sidebar-tab--settings {
+  right: var(--right-width);
+  border-right: 0;
+  border-radius: 6px 0 0 6px;
+}
+.sidebar-tab:hover,
+.sidebar-tab:focus-visible {
+  color: var(--purple);
+  background: #eee9f9;
+}
+.sidebar-tab:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 1px;
+}
+.sidebar-tab-arrow {
+  display: flex;
+}
+.sidebar-tab .icon {
+  width: 13px;
+  height: 13px;
+}
+.sidebar-tab-label {
+  writing-mode: vertical-rl;
+  font-size: 11px;
+  font-weight: 550;
+  line-height: 15px;
+  letter-spacing: .15px;
+  white-space: nowrap;
+}
+.workspace {
+  transition: grid-template-columns .18s ease;
+}
+@media (max-width: 800px) {
+  .sidebar-tab--settings { right: 0; }
+}
+@media (max-width: 560px) {
+  .sidebar-tab--books { left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-tab,
+  .workspace { transition: none; }
 }

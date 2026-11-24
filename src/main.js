@@ -73,15 +73,17 @@ app.innerHTML = `
   </nav>
 </header>
 <div class="workspace">
+  <button class="sidebar-tab sidebar-tab--books" id="books-panel-tab" data-action="toggle-books" aria-label="Collapse Books" aria-expanded="true" aria-controls="book-library" title="Hide Books panel"><span class="sidebar-tab-arrow">${icon("left")}</span><span class="sidebar-tab-label">Books</span></button>
+  <button class="sidebar-tab sidebar-tab--settings" id="settings-panel-tab" data-action="toggle-settings" aria-label="Collapse book settings" aria-expanded="true" aria-controls="inspector" title="Hide book settings panel"><span class="sidebar-tab-arrow">${icon("chevron")}</span><span class="sidebar-tab-label">Book settings</span></button>
   <aside class="library" id="book-library" aria-label="Book library">
-    <div class="library-heading"><h1>Books<span id="book-count">0</span></h1><button class="icon-btn panel-collapse" id="collapse-books" data-action="toggle-books" aria-label="Collapse Books" aria-expanded="true" aria-controls="book-library" title="Hide Books panel">${icon("hide-left-panel")}</button></div>
+    <div class="library-heading"><h1>Books<span id="book-count">0</span></h1></div>
     <button class="upload-zone" id="upload-zone" data-action="add-books"><span class="upload-title">${icon("plus")}<strong>Add your PDFs</strong></span><span class="upload-hint">Choose files or drop them here</span></button>
     <div class="library-label"><span>IN THIS PROJECT</span><button class="text-btn" data-action="add-sample" title="Add the sample book">Try a sample</button></div>
     <div class="book-list" id="book-list"></div>
     <div class="library-footer"><div class="privacy-note"><span class="privacy-icon" aria-hidden="true">${icon("shield")}</span><strong>Files stay on your device</strong></div><button class="text-btn" data-action="help">Help</button></div>
   </aside>
   <main class="studio">
-    <div class="studio-heading"><h2>Print layout</h2><div class="panel-restore-controls"><button class="text-btn" id="restore-books" data-action="toggle-books" aria-label="Expand Books" aria-expanded="false" aria-controls="book-library" hidden>${icon("book")} Books</button><button class="text-btn" id="restore-settings" data-action="toggle-settings" aria-label="Expand book settings" aria-expanded="false" aria-controls="inspector" hidden>${icon("settings")} Book settings</button></div></div>
+    <div class="studio-heading"><h2>Print layout</h2></div>
     <section class="sheet-setup" id="sheet-setup" aria-label="Sheet setup"></section>
     <div class="preview-toolbar"><div class="preview-title">${icon("eye")} <strong>Preview</strong></div><div class="zoom-controls"><button class="icon-btn" data-action="zoom-out" aria-label="Zoom out">${icon("minus")}</button><select class="zoom-select" id="zoom-label" data-preview-zoom="true" aria-label="Preview zoom"><option value="1">Fit</option></select><button class="icon-btn" data-action="zoom-in" aria-label="Zoom in">${icon("plus")}</button></div></div>
     <div id="layout-messages" class="layout-messages" aria-live="polite"></div>
@@ -172,7 +174,7 @@ function renderInspector() {
     book = bookNow();
   if (!book) {
     delete el.dataset.view;
-    el.innerHTML = `<div class="inspector-empty">${settingsCollapseButton()}${icon("settings")}<h3>Book settings</h3><p>Add or select a book to adjust its pages, cover, and cutting guides.</p><button class="btn" data-action="sheet-setup">Sheet setup</button></div>`;
+    el.innerHTML = `<div class="inspector-empty">${icon("settings")}<h3>Book settings</h3><p>Add or select a book to adjust its pages, cover, and cutting guides.</p><button class="btn" data-action="sheet-setup">Sheet setup</button></div>`;
     return;
   }
   const tabDisabled = (tab) =>
@@ -213,7 +215,7 @@ function renderInspector() {
     )
     .join(
       "",
-    )}${settingsCollapseButton()}</div><div class="inspector-content" role="tabpanel"><fieldset class="book-settings-fields" aria-label="Book print settings" ${book.hidden ? "disabled" : ""}>${inspectorTab === "pages" ? pagesPanel(book) : inspectorTab === "cover" ? coverPanel(book) : cuttingPanel(book)}</fieldset></div>`;
+    )}</div><div class="inspector-content" role="tabpanel"><fieldset class="book-settings-fields" aria-label="Book print settings" ${book.hidden ? "disabled" : ""}>${inspectorTab === "pages" ? pagesPanel(book) : inspectorTab === "cover" ? coverPanel(book) : cuttingPanel(book)}</fieldset></div>`;
   syncSizingControls();
   if (position) {
     const content = $(".inspector-content", el);
@@ -745,15 +747,23 @@ function setSidebarCollapsed(panel, collapsed, moveFocus = false) {
   workspace.classList.toggle("settings-collapsed", settingsCollapsed);
   $("#book-library").hidden = booksCollapsed;
   $("#inspector").hidden = settingsCollapsed;
-  $("#restore-books").hidden = !booksCollapsed;
-  $("#restore-settings").hidden = !settingsCollapsed;
-  if (moveFocus)
-    $(collapsed ? (library ? "#restore-books" : "#restore-settings") :
-      (library ? "#collapse-books" : "#collapse-settings"))?.focus();
+  for (const [id, hidden, label, closeIcon, openIcon] of [
+    ["books-panel-tab", booksCollapsed, "Books", "left", "chevron"],
+    ["settings-panel-tab", settingsCollapsed, "book settings", "chevron", "left"],
+  ]) {
+    const tab = $(`#${id}`);
+    tab.setAttribute("aria-expanded", String(!hidden));
+    tab.setAttribute("aria-label", `${hidden ? "Expand" : "Collapse"} ${label}`);
+    tab.title = `${hidden ? "Show" : "Hide"} ${label} panel`;
+    tab.querySelector(".sidebar-tab-arrow").innerHTML = icon(hidden ? openIcon : closeIcon);
+  }
+  if (moveFocus) {
+    $(library ? "#books-panel-tab" : "#settings-panel-tab").focus({ preventScroll: true });
+    const stacked = matchMedia(library ? "(max-width: 560px)" : "(max-width: 800px)").matches;
+    if (!collapsed && stacked)
+      $(library ? "#book-library" : "#inspector").scrollIntoView({ block: "start", behavior: "smooth" });
+  }
   resizePreview();
-}
-function settingsCollapseButton() {
-  return `<button class="icon-btn panel-collapse" id="collapse-settings" data-action="toggle-settings" aria-label="Collapse book settings" aria-expanded="true" aria-controls="inspector" title="Hide book settings panel">${icon("hide-right-panel")}</button>`;
 }
 function setPreviewZoom(value) {
   zoom = Math.max(0.5, Math.min(10, value));

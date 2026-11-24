@@ -10,8 +10,6 @@ const paths = {
   check: '<path d="m5 12 4 4L19 6"/>',
   chevron: '<path d="m9 5 7 7-7 7"/>',
   left: '<path d="m15 5-7 7 7 7"/>',
-  "hide-left-panel": '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d="M4 5h4v14H4z" fill="currentColor" opacity=".16" stroke="none"/><path d="M13 12h5"/>',
-  "hide-right-panel": '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/><path d="M16 5h4v14h-4z" fill="currentColor" opacity=".16" stroke="none"/><path d="M6 12h5"/>',
   settings: '<path d="M4 7h16M4 17h16M8 4v6m8 4v6"/>',
   shield:
     '<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6z"/><path d="m8 12 3 3 5-6"/>',
