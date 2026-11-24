@@ -1,5 +1,5 @@
 import "./style.css";
-import { createSampleBook } from "./sample-book.js";
+import { createSampleBook, SAMPLE_BOOKS } from "./sample-book.js";
 import { createSheetPreview } from "./preview.js";
 import { hasArtwork, previewSceneSize } from "./render-geometry.js";
 import { icon } from "./icons.js";
@@ -77,7 +77,7 @@ app.innerHTML = `
   <aside class="library" id="book-library" aria-label="Book library">
     <div class="library-heading"><h1>Books<span id="book-count">0</span></h1><button class="icon-btn panel-collapse" id="collapse-books" data-action="toggle-books" aria-label="Collapse Books" aria-expanded="true" aria-controls="book-library" title="Hide Books panel">${icon("hide-left-panel")}</button></div>
     <button class="upload-zone" id="upload-zone" data-action="add-books"><span class="upload-title">${icon("plus")}<strong>Add your PDFs</strong></span><span class="upload-hint">Choose files or drop them here</span></button>
-    <div class="library-label"><span>IN THIS PROJECT</span><button class="text-btn" data-action="add-sample" title="Add the sample book">Try a sample</button></div>
+    <div class="library-label"><span>IN THIS PROJECT</span><button class="text-btn" data-action="add-sample" title="Add both sample books">Try samples</button></div>
     <div class="book-list" id="book-list"></div>
     <div class="library-footer"><div class="privacy-note"><span class="privacy-icon" aria-hidden="true">${icon("shield")}</span><strong>Files stay on your device</strong></div><button class="text-btn" data-action="help">Help</button></div>
   </aside>
@@ -86,7 +86,7 @@ app.innerHTML = `
     <section class="sheet-setup" id="sheet-setup" aria-label="Sheet setup"></section>
     <div class="preview-toolbar"><div class="preview-title">${icon("eye")} <strong>Preview</strong></div><div class="zoom-controls"><button class="icon-btn" data-action="zoom-out" aria-label="Zoom out">${icon("minus")}</button><select class="zoom-select" id="zoom-label" data-preview-zoom="true" aria-label="Preview zoom"><option value="1">Fit</option></select><button class="icon-btn" data-action="zoom-in" aria-label="Zoom in">${icon("plus")}</button></div></div>
     <div id="layout-messages" class="layout-messages" aria-live="polite"></div>
-    <div class="preview-stage" id="preview-stage"><div class="sheet-scene" id="sheet-scene"><div class="dimension horizontal" id="paper-width"></div><div class="dimension vertical"><span id="paper-height"></span></div><div class="paper" id="paper"><canvas id="preview-canvas" aria-label="Print sheet preview"></canvas><div id="piece-overlays"></div><div class="preview-loading" id="preview-loading"><span class="spinner"></span><span>Loading preview...</span></div></div></div><div class="empty-preview" id="empty-preview" hidden><span class="empty-icon">${icon("book")}</span><h3>Add a book</h3><p>Add a PDF or try the sample.</p><button class="btn primary" data-action="add-books">${icon("plus")} Add a PDF</button><button class="text-btn" data-action="add-sample">Try the sample book</button></div></div>
+    <div class="preview-stage" id="preview-stage"><div class="sheet-scene" id="sheet-scene"><div class="dimension horizontal" id="paper-width"></div><div class="dimension vertical"><span id="paper-height"></span></div><div class="paper" id="paper"><canvas id="preview-canvas" aria-label="Print sheet preview"></canvas><div id="piece-overlays"></div><div class="preview-loading" id="preview-loading"><span class="spinner"></span><span>Loading preview...</span></div></div></div><div class="empty-preview" id="empty-preview" hidden><span class="empty-icon">${icon("book")}</span><h3>Add a book</h3><p>Add a PDF or try the samples.</p><button class="btn primary" data-action="add-books">${icon("plus")} Add a PDF</button><button class="text-btn" data-action="add-sample">Try the sample books</button></div></div>
     <div class="preview-pagination"><span id="preview-info"></span><div class="page-navigation"><button class="icon-btn" data-action="prev-face" aria-label="Previous sheet side">${icon("left")}</button><span id="face-label">Sheet 1</span><button class="icon-btn" data-action="next-face" aria-label="Next sheet side">${icon("chevron")}</button></div><button class="text-btn" data-action="all-sheets">${icon("grid")} All sheets</button></div>
     <div class="print-bar"><div class="print-total"><span class="print-icon">${icon("file")}</span><div><strong id="output-total">No sheets</strong><small id="output-detail">Add a PDF to begin.</small></div></div><div class="print-actions"><button class="btn" data-action="print" id="print-btn">${icon("print")} Print</button><button class="btn primary" data-action="export" id="export-btn">${icon("download")} Export PDF</button></div></div>
     <div class="scale-note">${icon("info")} Print at <strong>100% / Actual size</strong>. Turn off page scaling and headers.</div>
@@ -711,7 +711,7 @@ function refreshLayout() {
     : "No sheets";
   $("#output-detail").textContent = layout.sheets.length
     ? `${enabled.length} book${enabled.length === 1 ? "" : "s"} / ${output.length} printed side${output.length === 1 ? "" : "s"}${duplex && s.output !== "all" ? ` / ${s.output}s only` : ""}`
-    : "Add a PDF or try a sample to begin.";
+    : "Add a PDF or try the samples to begin.";
   $("#empty-preview").hidden = layout.faces.length > 0;
   $("#sheet-scene").hidden = layout.faces.length === 0;
   for (const button of [$("#print-btn"), $("#export-btn")])
@@ -1493,15 +1493,14 @@ app.addEventListener("click", async (event) => {
   }
   if (action === "add-sample") {
     await withBusy(async () => {
-      const asset = await createSampleAsset();
-      state.assets[asset.id] = asset;
-      const book = createSampleBook(asset, uid());
-      state.books = [...state.books, book];
-      selected = book.id;
+      const samples = await loadSamples();
+      for (const { asset } of samples) state.assets[asset.id] = asset;
+      state.books = [...state.books, ...samples.map(({ book }) => book)];
+      selected = samples[0].book.id;
       inspectorMode = "book";
       inspectorTab = "pages";
       changed({ form: true });
-      toast("Sample added.");
+      toast("Both samples added.");
     });
     return;
   }
@@ -1588,6 +1587,12 @@ document.addEventListener("keydown", (event) => {
   }
 });
 new ResizeObserver(() => resizePreview()).observe($("#preview-stage"), { box: "border-box" });
+async function loadSamples() {
+  return Promise.all(SAMPLE_BOOKS.map(async (sample) => {
+    const asset = await createSampleAsset(sample);
+    return { asset, book: createSampleBook(asset, uid(), sample) };
+  }));
+}
 async function init() {
   let restored = false;
   try {
@@ -1605,10 +1610,9 @@ async function init() {
     );
   }
   if (!restored) {
-    const asset = await createSampleAsset();
-    state.assets[asset.id] = asset;
-    const book = createSampleBook(asset, uid());
-    state.books = [book];
+    const samples = await loadSamples();
+    for (const { asset } of samples) state.assets[asset.id] = asset;
+    state.books = samples.map(({ book }) => book);
   }
   for (const asset of Object.values(state.assets)) {
     if (

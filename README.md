@@ -13,7 +13,7 @@ npm ci
 npm run dev
 ```
 
-Open the local URL printed in the terminal. The included Pride and Prejudice sample contains 31 pages from the supplied prideprejudice00aust.pdf scan: original page 1 and pages 4-33. Sample page 1 supplies the front cover; pages 2-31 supply the body. The spine and back cover use a matching dark green and gold design. New projects start on A4 landscape. Existing saved projects keep their settings; use Try a sample to add this book.
+Open the local URL printed in the terminal. Both samples are enabled on first visit. The included Pride and Prejudice sample contains 31 pages from the supplied prideprejudice00aust.pdf scan: original page 1 and pages 4-33. Sample page 1 supplies the front cover; pages 2-31 supply the body. The spine and back cover use a matching dark green and gold design. New projects start on A4 landscape. Existing saved projects keep their settings; use Try samples to add both books.
 
 ```sh
 npm test
@@ -100,3 +100,9 @@ Touching pages share pixel boundaries in the preview to avoid thumbnail-rounding
 Removing a book asks for confirmation, with Undo available after removal. The faint dotted **Cutting grid** covers empty sheet areas in preview and print/PDF without marking artwork. Turn it off or change its spacing in **Sheet setup > Sheet guides**. Grid positions follow the same duplex flip and back offsets as the pages.
 
 The layout tests include 768 mixed-book combinations across paper sizes, orientations, print modes, flip edges, row settings, and enabled parts. Browser checks cover importing, saving/reopening, removal/Undo, cover sources, validation, print preview, and PDF export. Blank source pages remain blank leaves. Page-only margins and mark ranges do not block cover-only output.
+
+### Alice sample source
+
+Alice's Adventures in Wonderland includes an original Bookche red and gold front cover, followed by source PDF pages 5-32 (chapters I-V, 28 body pages). The spine and back cover use matching colors. The sample is about 0.95 MB and retains vector text and the original illustrations.
+
+Text by Lewis Carroll; illustrations by John Tenniel. Source typesetting by PDFreeBooks.org, obtained from [Internet Archive](https://archive.org/details/AlicesAdventuresInWonderland). The [Wikimedia Commons source record](https://commons.wikimedia.org/wiki/File:Alice%27s_Adventures_In_Wonderland_(IA_AlicesAdventuresInWonderland).pdf) identifies the text, illustrations, and PDF as public domain. Only the shortened PDF is bundled; no external requests are needed to load it.

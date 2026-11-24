@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { PDFDocument } from "pdf-lib";
-import { createSampleBook } from "../src/sample-book.js";
+import { createSampleBook, SAMPLE_BOOKS } from "../src/sample-book.js";
 import { computeLayout, defaultSettings, paperSize } from "../src/layout.js";
 import { normalizeProject } from "../src/storage.js";
 
@@ -30,4 +30,36 @@ test("bundled sample prints 30 body pages and uses page 1 only for its front cov
   assert.equal(pieces.filter(p => p.kind === "cover").length, 1);
   assert.deepEqual(pieces.filter(p => p.kind === "page").map(p => p.page), Array.from({ length: 30 }, (_, i) => i + 2));
   assert.equal(book.margin, 0);
+});
+
+
+test("both default samples include printable pages and covers in single and double-sided layouts", async () => {
+  const books = [];
+  for (const sample of SAMPLE_BOOKS) {
+    const bytes = await readFile(new URL(`../src/assets/${sample.id}-sample.pdf`, import.meta.url));
+    const pdf = await PDFDocument.load(bytes);
+    const asset = { id: sample.id, pageCount: pdf.getPageCount(), pageSizes: pdf.getPages().map(p => p.getSize()) };
+    const book = createSampleBook(asset, sample.id, sample);
+    assert.equal(book.includePages, true);
+    assert.equal(book.cover.enabled, true);
+    assert.notEqual(book.hidden, true);
+    assert.deepEqual(book.cover.front, { type: "book", page: 1 });
+    assert.equal(book.ranges, `2-${pdf.getPageCount()}`);
+    books.push(book);
+    if (sample.id === "alice-in-wonderland") {
+      assert.equal(pdf.getPageCount(), 29);
+      assert.ok(bytes.length < 1_000_000);
+      assert.equal(book.cover.color, "#6e131c");
+    }
+  }
+  assert.equal(books.length, 2);
+  for (const mode of ["single", "duplex"]) {
+    const layout = computeLayout(books, { ...defaultSettings(), mode });
+    assert.deepEqual(layout.errors, []);
+    for (const book of books) {
+      const pieces = layout.sheets.flatMap(s => [...s.front, ...s.back]).filter(p => p.bookId === book.id);
+      assert.equal(pieces.filter(p => p.kind === "cover").length, 1);
+      assert.deepEqual(pieces.filter(p => p.kind === "page").map(p => p.page).sort((a,b) => a-b), Array.from({ length: book.pageCount - 1 }, (_, i) => i + 2));
+    }
+  }
 });

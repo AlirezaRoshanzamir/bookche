@@ -1,6 +1,8 @@
 import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
 import * as pdfjs from "pdfjs-dist";
-import sampleUrl from "./assets/pride-and-prejudice-sample.pdf?url";
+import prideSampleUrl from "./assets/pride-and-prejudice-sample.pdf?url";
+import aliceSampleUrl from "./assets/alice-in-wonderland-sample.pdf?url";
+import { SAMPLE_BOOKS } from "./sample-book.js";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { mm, outputFaces } from "./layout.js";
 import { makeCoverLettering, spineTextFor, coverGradientColor } from "./cover.js";
@@ -37,13 +39,17 @@ const color = (hex) => {
   const n = parseInt(hex.slice(1), 16);
   return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 };
-export async function createSampleAsset() {
-  const response = await fetch(sampleUrl);
+const sampleUrls = {
+  "pride-and-prejudice": prideSampleUrl,
+  "alice-in-wonderland": aliceSampleUrl,
+};
+export async function createSampleAsset(sample = SAMPLE_BOOKS[0]) {
+  const response = await fetch(sampleUrls[sample.id]);
   if (!response.ok) throw new Error("Could not load the sample book. Please try again.");
   const bytes = new Uint8Array(await response.arrayBuffer());
   return {
     id: crypto.randomUUID(),
-    name: "Pride and Prejudice - sample.pdf",
+    name: `${sample.title} - sample.pdf`,
     mime: "application/pdf",
     bytes,
     ...await inspectPdfDetails(bytes),
