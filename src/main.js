@@ -74,7 +74,7 @@ app.innerHTML = `
 </header>
 <div class="workspace">
   <aside class="library" id="book-library" aria-label="Book library">
-    <div class="library-heading"><h1>Books<span id="book-count">0</span></h1><button class="icon-btn panel-collapse" id="collapse-books" data-action="toggle-books" aria-label="Collapse Books" aria-expanded="true" aria-controls="book-library" title="Collapse Books">${icon("left")}</button></div>
+    <div class="library-heading"><h1>Books<span id="book-count">0</span></h1><button class="icon-btn panel-collapse" id="collapse-books" data-action="toggle-books" aria-label="Collapse Books" aria-expanded="true" aria-controls="book-library" title="Hide Books panel">${icon("hide-left-panel")}</button></div>
     <button class="upload-zone" id="upload-zone" data-action="add-books"><span class="upload-title">${icon("plus")}<strong>Add your PDFs</strong></span><span class="upload-hint">Choose files or drop them here</span></button>
     <div class="library-label"><span>IN THIS PROJECT</span><button class="text-btn" data-action="add-sample" title="Add the sample book">Try a sample</button></div>
     <div class="book-list" id="book-list"></div>
@@ -753,7 +753,7 @@ function setSidebarCollapsed(panel, collapsed, moveFocus = false) {
   resizePreview();
 }
 function settingsCollapseButton() {
-  return `<button class="icon-btn panel-collapse" id="collapse-settings" data-action="toggle-settings" aria-label="Collapse book settings" aria-expanded="true" aria-controls="inspector" title="Collapse book settings">${icon("chevron")}</button>`;
+  return `<button class="icon-btn panel-collapse" id="collapse-settings" data-action="toggle-settings" aria-label="Collapse book settings" aria-expanded="true" aria-controls="inspector" title="Hide book settings panel">${icon("hide-right-panel")}</button>`;
 }
 function setPreviewZoom(value) {
   zoom = Math.max(0.5, Math.min(10, value));
