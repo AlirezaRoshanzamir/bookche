@@ -13,11 +13,11 @@ test("new projects use A4 landscape while saved portrait stays portrait", () => 
   assert.equal(normalizeProject({ ...project, settings: { orientation: "portrait" } }).settings.orientation, "portrait");
 });
 
-test("bundled sample prints 30 body pages and uses page 1 only for its front cover", async () => {
+test("bundled sample prints 19 body pages and uses page 1 only for its front cover", async () => {
   const bytes = await readFile(new URL("../src/assets/pride-and-prejudice-sample.pdf", import.meta.url));
   const pdf = await PDFDocument.load(bytes);
-  assert.equal(pdf.getPageCount(), 31);
-  const asset = { id: "sample", pageCount: 31, pageSizes: pdf.getPages().map(p => p.getSize()) };
+  assert.equal(pdf.getPageCount(), 20);
+  const asset = { id: "sample", pageCount: 20, pageSizes: pdf.getPages().map(p => p.getSize()) };
   const book = createSampleBook(asset, "book");
   assert.equal(book.title, "Pride and Prejudice");
   assert.equal(book.cover.mode, "separate");
@@ -28,7 +28,7 @@ test("bundled sample prints 30 body pages and uses page 1 only for its front cov
   assert.deepEqual(layout.errors, []);
   const pieces = layout.sheets.flatMap(s => s.front);
   assert.equal(pieces.filter(p => p.kind === "cover").length, 1);
-  assert.deepEqual(pieces.filter(p => p.kind === "page").map(p => p.page), Array.from({ length: 30 }, (_, i) => i + 2));
+  assert.deepEqual(pieces.filter(p => p.kind === "page").map(p => p.page), Array.from({ length: 19 }, (_, i) => i + 2));
   assert.equal(book.margin, 0);
 });
 
@@ -47,7 +47,7 @@ test("both default samples include printable pages and covers in single and doub
     assert.equal(book.ranges, `2-${pdf.getPageCount()}`);
     books.push(book);
     if (sample.id === "alice-in-wonderland") {
-      assert.equal(pdf.getPageCount(), 29);
+      assert.equal(pdf.getPageCount(), 20);
       assert.ok(bytes.length < 1_000_000);
       assert.equal(book.cover.color, "#6e131c");
     }
@@ -56,6 +56,14 @@ test("both default samples include printable pages and covers in single and doub
   for (const mode of ["single", "duplex"]) {
     const layout = computeLayout(books, { ...defaultSettings(), mode });
     assert.deepEqual(layout.errors, []);
+    assert.equal(layout.sheets.length, 1);
+    if (mode === "single") {
+      const pieces = layout.sheets[0].front;
+      assert.equal(new Set(pieces.map(p => p.y)).size, 4);
+      for (const book of books) {
+        assert.equal(new Set(pieces.filter(p => p.bookId === book.id).map(p => p.y)).size, 2);
+      }
+    }
     for (const book of books) {
       const pieces = layout.sheets.flatMap(s => [...s.front, ...s.back]).filter(p => p.bookId === book.id);
       assert.equal(pieces.filter(p => p.kind === "cover").length, 1);

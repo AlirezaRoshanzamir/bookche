@@ -13,7 +13,7 @@ npm ci
 npm run dev
 ```
 
-Open the local URL printed in the terminal. Both samples are enabled on first visit. The included Pride and Prejudice sample contains 31 pages from the supplied prideprejudice00aust.pdf scan: original page 1 and pages 4-33. Sample page 1 supplies the front cover; pages 2-31 supply the body. The spine and back cover use a matching dark green and gold design. New projects start on A4 landscape. Existing saved projects keep their settings; use Try samples to add both books.
+Open the local URL printed in the terminal. Both samples are enabled on first visit, with 19 body pages and one cover each, arranged in two rows per book (four rows total), and fit together on one A4 landscape sheet. The included Pride and Prejudice sample contains 20 pages from the supplied prideprejudice00aust.pdf scan: original page 1 and pages 4-22. Sample page 1 supplies the front cover; pages 2-20 supply the body. The spine and back cover use a matching dark green and gold design. New projects start on A4 landscape. Existing saved projects keep their settings; use Try samples to add both books.
 
 ```sh
 npm test
@@ -103,6 +103,6 @@ The layout tests include 768 mixed-book combinations across paper sizes, orienta
 
 ### Alice sample source
 
-Alice's Adventures in Wonderland includes an original Bookche red and gold front cover, followed by source PDF pages 5-32 (chapters I-V, 28 body pages). The spine and back cover use matching colors. The sample is about 0.95 MB and retains vector text and the original illustrations.
+Alice's Adventures in Wonderland includes an original Bookche red and gold front cover, followed by source PDF pages 5-23 (19 body pages). The spine and back cover use matching colors. The sample is less than 1 MB and retains vector text and the original illustrations.
 
 Text by Lewis Carroll; illustrations by John Tenniel. Source typesetting by PDFreeBooks.org, obtained from [Internet Archive](https://archive.org/details/AlicesAdventuresInWonderland). The [Wikimedia Commons source record](https://commons.wikimedia.org/wiki/File:Alice%27s_Adventures_In_Wonderland_(IA_AlicesAdventuresInWonderland).pdf) identifies the text, illustrations, and PDF as public domain. Only the shortened PDF is bundled; no external requests are needed to load it.
