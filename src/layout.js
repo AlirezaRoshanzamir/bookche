@@ -79,7 +79,7 @@ export function makeBook(id, title, assetId, pageCount) {
 export function defaultSettings() {
   return {
     paper: "A4",
-    orientation: "portrait",
+    orientation: "landscape",
     customWidth: 210,
     customHeight: 297,
     sheetMargin: 10,

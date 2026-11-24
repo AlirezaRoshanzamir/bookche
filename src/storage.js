@@ -114,7 +114,7 @@ export function normalizeProject(data, encoded = false) {
         ["A3", "A4", "A5", "Letter", "Legal", "Custom"],
         "A4",
       ),
-      orientation: oneOf(s.orientation, ["portrait", "landscape"], "portrait"),
+      orientation: oneOf(s.orientation, ["portrait", "landscape"], "landscape"),
       mode: oneOf(s.mode, ["single", "duplex"], "single"),
       flip: oneOf(s.flip, ["long", "short"], "long"),
       output: oneOf(s.output, ["all", "front", "back"], "all"),

@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
 import * as pdfjs from "pdfjs-dist";
+import sampleUrl from "./assets/pride-and-prejudice-sample.pdf?url";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { mm, outputFaces } from "./layout.js";
 import { makeCoverLettering, spineTextFor, coverGradientColor } from "./cover.js";
@@ -36,79 +37,16 @@ const color = (hex) => {
   const n = parseInt(hex.slice(1), 16);
   return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 };
-function wrapText(text, max = 18) {
-  const words = text.split(/\s+/),
-    lines = [];
-  let line = "";
-  for (const word of words) {
-    if ((line + " " + word).trim().length > max && line) {
-      lines.push(line);
-      line = "";
-    }
-    line = (line + " " + word).trim();
-  }
-  if (line) lines.push(line);
-  return lines.slice(0, 5);
-}
-export async function createDemoAsset() {
-  const doc = await PDFDocument.create();
-  const serif = await doc.embedFont(StandardFonts.TimesRoman),
-    italic = await doc.embedFont(StandardFonts.TimesRomanItalic);
-  const titles = [
-    "The art of noticing",
-    "A window left open",
-    "The first cup",
-    "After the rain",
-    "Between the pages",
-    "A quieter kind of day",
-    "The long way home",
-    "Things that grow slowly",
-    "An ordinary afternoon",
-    "Room for a little wonder",
-    "The blue hour",
-    "Small beginnings",
-  ];
-  for (let i = 0; i < titles.length; i++) {
-    const page = doc.addPage([250, 350]);
-    page.drawText("QUIET THINGS", {
-      x: 38,
-      y: 307,
-      size: 8,
-      font: serif,
-      color: rgb(0.3, 0.38, 0.32),
-    });
-    let y = 265;
-    for (const line of wrapText(titles[i], 23)) {
-      page.drawText(line, { x: 38, y, size: 19, font: italic });
-      y -= 24;
-    }
-    y -= 22;
-    const prose =
-      "There is a whole world in the smallest things. A leaf turning toward the light. The soft sound of a page. A moment with nowhere else to be. Keep a little space for these things. Let the day unfold at its own pace. Sometimes a small beginning is all you need.";
-    for (const line of wrapText(prose, 32).length
-      ? prose.match(/.{1,31}(?:\s|$)/g) || []
-      : []) {
-      page.drawText(line.trim(), {
-        x: 38,
-        y,
-        size: 10.2,
-        font: serif,
-        lineHeight: 15,
-      });
-      y -= 15;
-    }
-    page.drawText(String(i + 1), { x: 122, y: 23, size: 9, font: serif });
-  }
+export async function createSampleAsset() {
+  const response = await fetch(sampleUrl);
+  if (!response.ok) throw new Error("Could not load the sample book. Please try again.");
+  const bytes = new Uint8Array(await response.arrayBuffer());
   return {
     id: crypto.randomUUID(),
-    name: "Quiet things - sample.pdf",
+    name: "Pride and Prejudice - sample.pdf",
     mime: "application/pdf",
-    bytes: await doc.save(),
-    pageCount: 12,
-    pageSizes: Array.from({ length: 12 }, () => ({
-      width: (250 * 25.4) / 72,
-      height: (350 * 25.4) / 72,
-    })),
+    bytes,
+    ...await inspectPdfDetails(bytes),
   };
 }
 async function generatedText(

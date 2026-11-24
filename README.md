@@ -13,7 +13,7 @@ npm ci
 npm run dev
 ```
 
-Open the local URL printed in the terminal. A small sample book is included so you can explore before adding your own PDFs.
+Open the local URL printed in the terminal. The included Pride and Prejudice sample contains 31 pages from the supplied prideprejudice00aust.pdf scan: original page 1 and pages 4-33. Sample page 1 supplies the front cover; pages 2-31 supply the body. The spine and back cover use a matching dark green and gold design. New projects start on A4 landscape. Existing saved projects keep their settings; use Try a sample to add this book.
 
 ```sh
 npm test

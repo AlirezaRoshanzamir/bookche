@@ -1,4 +1,5 @@
 import "./style.css";
+import { createSampleBook } from "./sample-book.js";
 import { createSheetPreview } from "./preview.js";
 import { hasArtwork, previewSceneSize } from "./render-geometry.js";
 import { icon } from "./icons.js";
@@ -13,7 +14,7 @@ import {
 import {
   buildPdf,
   calibrationPdf,
-  createDemoAsset,
+  createSampleAsset,
   inspectPdfDetails,
 } from "./pdf.js";
 import {
@@ -1492,13 +1493,9 @@ app.addEventListener("click", async (event) => {
   }
   if (action === "add-sample") {
     await withBusy(async () => {
-      const asset = await createDemoAsset();
+      const asset = await createSampleAsset();
       state.assets[asset.id] = asset;
-      const book = makeBook(uid(), "Quiet things", asset.id, asset.pageCount);
-      Object.assign(
-        book,
-        resizeBook(book, "lockAspectRatio", true, bookReference(book)),
-      );
+      const book = createSampleBook(asset, uid());
       state.books = [...state.books, book];
       selected = book.id;
       inspectorMode = "book";
@@ -1608,13 +1605,9 @@ async function init() {
     );
   }
   if (!restored) {
-    const asset = await createDemoAsset();
+    const asset = await createSampleAsset();
     state.assets[asset.id] = asset;
-    const book = makeBook(uid(), "Quiet things", asset.id, asset.pageCount);
-    Object.assign(
-      book,
-      resizeBook(book, "lockAspectRatio", true, bookReference(book)),
-    );
+    const book = createSampleBook(asset, uid());
     state.books = [book];
   }
   for (const asset of Object.values(state.assets)) {

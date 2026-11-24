@@ -22,7 +22,7 @@ test("page ranges accept all, disjoint intervals and remove duplicates", () => {
 test("single-sided pages touch in horizontal strips with configurable row spacing", () => {
   const b = book(12);
   b.cover.enabled = false;
-  const result = computeLayout([b], defaultSettings());
+  const result = computeLayout([b], { ...defaultSettings(), orientation: "portrait" });
   assert.equal(result.errors.length, 0);
   const p = result.sheets[0].front;
   assert.equal(p[1].x, p[0].x + b.width);
@@ -125,13 +125,13 @@ test("oversized pieces and invalid ranges block output clearly", () => {
 test("back offsets apply in viewed-back coordinates and warn about clipping", () => {
   const b = book(2);
   b.cover.enabled = false;
-  const s = duplex({ backOffsetX: 1.2, backOffsetY: -2.4 }),
+  const s = duplex({ orientation: "portrait", backOffsetX: 1.2, backOffsetY: -2.4 }),
     result = computeLayout([b], s);
   const f = result.sheets[0].front[0],
     r = result.sheets[0].back[0];
   assert.equal(r.x, result.width - f.x - f.width + 1.2);
   assert.equal(r.y, f.y - 2.4);
-  assert.ok(computeLayout([b], duplex({ backOffsetY: -20 })).warnings.length);
+  assert.ok(computeLayout([b], duplex({ orientation: "portrait", backOffsetY: -20 })).warnings.length);
 });
 test("manual duplex output preserves each physical sheet, including blank backs", () => {
   const b = book(400),
@@ -220,7 +220,7 @@ test("cover overhang and spine width affect physical cut dimensions independentl
 test("covers and pages can share a row without changing reading order", () => {
   const b = book(8);
   b.pagesStartOnNewRow = false;
-  const pieces = computeLayout([b], defaultSettings()).sheets[0].front;
+  const pieces = computeLayout([b], { ...defaultSettings(), orientation: "portrait" }).sheets[0].front;
   assert.equal(pieces[0].kind, "cover");
   assert.equal(pieces[1].x, pieces[0].x + pieces[0].width + 3);
   assert.equal(pieces[1].y, pieces[0].y);
@@ -235,7 +235,7 @@ test("books share rows of mixed heights and wrap below the tallest item", () => 
   a.height = 60;
   b.pagesStartOnNewRow = false;
   b.rowGap = 7;
-  const pieces = computeLayout([a, b], defaultSettings()).sheets[0].front;
+  const pieces = computeLayout([a, b], { ...defaultSettings(), orientation: "portrait" }).sheets[0].front;
   assert.equal(pieces[1].x, 35);
   assert.equal(pieces[1].y, 10);
   assert.equal(pieces[7].x, 10);
@@ -301,7 +301,7 @@ test("shared rows can have zero spacing", () => {
   a.cover.enabled = b.cover.enabled = false;
   a.rowGap = b.rowGap = 0;
   b.pagesStartOnNewRow = false;
-  const pieces = computeLayout([a, b], defaultSettings()).sheets[0].front;
+  const pieces = computeLayout([a, b], { ...defaultSettings(), orientation: "portrait" }).sheets[0].front;
   assert.equal(pieces[7].y, 45);
   assert.equal(pieces[8].x, 35);
 });
